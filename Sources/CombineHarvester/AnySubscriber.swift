@@ -3,10 +3,34 @@
 /// Use an `AnySubscriber` to wrap an existing subscriber whose details you don’t want to expose.
 /// You can also use `AnySubscriber` to create a custom subscriber by providing closures for `Subscriber`’s methods, rather than implementing `Subscriber` directly.
 public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible /* ,CustomReflectable, CustomPlaygroundDisplayConvertible */ where Failure: Error {
+    fileprivate class SubscriptionBox: Cancellable {
+        var subscription: Subscription? {
+            willSet {
+                if newValue?.combineIdentifier != self.subscription?.combineIdentifier {
+                    self.cancel()
+                }
+            }
+        }
+
+        func cancel() {
+            self.subscription?.cancel()
+        }
+
+        deinit {
+            cancel()
+        }
+    }
+
     private let receiveSubscription: (Subscription) -> Void
     private let receiveValue: (Input) -> Subscribers.Demand
     private let receiveCompletion: (Subscribers.Completion<Failure>) -> Void
     public let combineIdentifier: CombineIdentifier
+
+    fileprivate let subscriptionBox = SubscriptionBox()
+
+    private static func defaultReceive(subscription: Subscription) {
+        subscription.request(.unlimited)
+    }
 
     /// Creates a type-erasing subscriber to wrap an existing subscriber.
     ///
@@ -18,17 +42,15 @@ public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible
                   combineIdentifier: s.combineIdentifier)
     }
 
-    #if false // Subject not yet implemented
-        public init<S>(_ s: S) where Input == S.Output, Failure == S.Failure, S: Subject {
-            self.init(receiveSubscription: nil,
-                      receiveValue: {
-                          s.send($0)
-                          return .unlimited
-                      },
-                      receiveCompletion: s.send(completion:),
-                      combineIdentifier: CombineIdentifier(s))
-        }
-    #endif
+    public init<S>(_ s: S) where Input == S.Output, Failure == S.Failure, S: Subject {
+        self.init(receiveSubscription: AnySubscriber<Input, Failure>.defaultReceive(subscription:),
+                  receiveValue: {
+                      s.send($0)
+                      return .unlimited
+                  },
+                  receiveCompletion: s.send(completion:),
+                  combineIdentifier: CombineIdentifier(s))
+    }
 
     /// Creates a type-erasing subscriber that executes the provided closures.
     ///
@@ -38,7 +60,7 @@ public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible
     ///   - receiveCompletion: A closure to execute when the subscriber receives a completion callback from the publisher.
     public init(receiveSubscription: ((Subscription) -> Void)? = nil, receiveValue: ((Input) -> Subscribers.Demand)? = nil, receiveCompletion: ((Subscribers.Completion<Failure>) -> Void)? = nil) {
         self.init(
-            receiveSubscription: receiveSubscription ?? { _ in },
+            receiveSubscription: receiveSubscription ?? AnySubscriber<Input, Failure>.defaultReceive(subscription:),
             // the default implementation of receiveValue demands unlimited data (so that the subscription may complete)
             receiveValue: receiveValue ?? { _ in .unlimited },
             receiveCompletion: receiveCompletion ?? { _ in },
@@ -58,6 +80,7 @@ public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible
     }
 
     public func receive(subscription: Subscription) {
+        self.subscriptionBox.subscription = subscription
         self.receiveSubscription(subscription)
     }
 
@@ -73,5 +96,14 @@ public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible
 extension Subscriber {
     public func eraseToAnySubscriber() -> AnySubscriber<Self.Input, Self.Failure> {
         return self as? AnySubscriber<Self.Input, Self.Failure> ?? AnySubscriber(self)
+    }
+}
+
+extension Publisher {
+    public func subscribe<S>(_ subject: S) -> AnyCancellable where S: Subject, Self.Failure == S.Failure, Self.Output == S.Output {
+        let subscriber = AnySubscriber(subject)
+        self.receive(subscriber: subscriber)
+
+        return AnyCancellable(subscriber.subscriptionBox)
     }
 }
