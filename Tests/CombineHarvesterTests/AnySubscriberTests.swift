@@ -9,10 +9,6 @@ import XCTest
 @testable import CombineHarvester
 
 class AnySubscriberTests: XCTestCase {
-    private enum TestError: Int, Error, RawRepresentable, Equatable {
-        case error
-    }
-
     private class TestSubscriber: Subscriber {
         typealias Input = Int
         typealias Failure = TestError
