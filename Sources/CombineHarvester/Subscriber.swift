@@ -1,5 +1,4 @@
 /// A protocol that declares a type that can receive input from a publisher.
-
 public protocol Subscriber: CustomCombineIdentifierConvertible {
     /// The kind of values this subscriber receives.
     associatedtype Input
@@ -28,7 +27,6 @@ public protocol Subscriber: CustomCombineIdentifierConvertible {
 }
 
 /// A namespace for types related to the `Subscriber` protocol.
-
 public enum Subscribers {
 }
 
@@ -41,6 +39,19 @@ extension Subscribers {
         case finished
 
         case failure(Failure)
+    }
+}
+
+extension Subscribers.Completion: Equatable where Failure: Equatable {
+    public static func == (lhs: Subscribers.Completion<Failure>, rhs: Subscribers.Completion<Failure>) -> Bool {
+        switch (lhs, rhs) {
+        case (.finished, .finished):
+            return true
+        case let (.failure(l), .failure(r)):
+            return l == r
+        case (.finished, .failure(_)), (.failure(_), .finished):
+            return false
+        }
     }
 }
 
