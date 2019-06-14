@@ -1,5 +1,3 @@
-// swiftformat:disable redundantGet redundantInit redundantLet redundantLetError redundantPattern unusedArguments
-
 /// A protocol that defines when and how to execute a closure.
 ///
 /// A scheduler used to execute code as soon as possible, or after a future date.

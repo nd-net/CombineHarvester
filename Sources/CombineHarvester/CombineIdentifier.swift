@@ -1,4 +1,3 @@
-
 public struct CombineIdentifier: Hashable, CustomStringConvertible {
     private let identifier: AnyObject?
 
