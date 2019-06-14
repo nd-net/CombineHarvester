@@ -2,7 +2,7 @@
 ///
 /// Use `AnyPublisher` to wrap a publisher whose type has details you don’t want to expose to subscribers or other publishers.
 public struct AnyPublisher<Output, Failure> where Failure: Error {
-    fileprivate let subscriptionHandler: (AnySubscriber<Output, Failure>) -> Void
+    fileprivate let didSubscribe: (AnySubscriber<Output, Failure>) -> Void
 
     /// Creates a type-erasing publisher to wrap the provided publisher.
     ///
@@ -17,13 +17,13 @@ public struct AnyPublisher<Output, Failure> where Failure: Error {
     /// - Parameters:
     ///   - subscribe: A closure to invoke when a subscriber subscribes to the publisher.
     public init(_ subscribe: @escaping (AnySubscriber<Output, Failure>) -> Void) {
-        self.subscriptionHandler = subscribe
+        self.didSubscribe = subscribe
     }
 }
 
 extension AnyPublisher: Publisher {
     public func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
-        self.subscriptionHandler(subscriber.eraseToAnySubscriber())
+        self.didSubscribe(subscriber.eraseToAnySubscriber())
     }
 }
 
