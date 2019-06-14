@@ -1,0 +1,12 @@
+--swiftversion 4.2
+# Explicitly add self
+--self insert
+# indent using 4 spaces
+--indent 4
+--exclude Pods
+# Do not use allman style braces, but K&R (opening on same line)
+--allman false
+--disable emptyBraces
+--ranges no-space
+--importgrouping testable-bottom
+--wrapcollections before-first
