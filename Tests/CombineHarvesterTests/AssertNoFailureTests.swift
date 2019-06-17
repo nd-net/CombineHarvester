@@ -31,7 +31,6 @@ class AssertNoFailureTests: XCTestCase {
             .subscribe(receiver)
 
         subject.send("Hello")
-
         subscription.cancel()
 
         subject.send(completion: .failure(.error)) // Won't trigger anything anymore
