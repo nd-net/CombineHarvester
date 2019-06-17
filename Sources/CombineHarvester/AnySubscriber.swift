@@ -4,20 +4,22 @@
 /// You can also use `AnySubscriber` to create a custom subscriber by providing closures for `Subscriber`’s methods, rather than implementing `Subscriber` directly.
 public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible /* ,CustomReflectable, CustomPlaygroundDisplayConvertible */ where Failure: Error {
     fileprivate class SubscriptionBox: Cancellable {
+        private var _subscription = Atomic<Subscription?>(value: nil)
+
         var subscription: Subscription? {
-            willSet {
-                if newValue?.combineIdentifier != self.subscription?.combineIdentifier {
-                    self.cancel()
+            get {
+                return self._subscription.value
+            }
+            set {
+                let old = self._subscription.swap(newValue)
+                if old?.combineIdentifier != newValue?.combineIdentifier {
+                    old?.cancel()
                 }
             }
         }
 
         func cancel() {
-            self.subscription?.cancel()
-        }
-
-        deinit {
-            cancel()
+            self.subscription = nil
         }
     }
 

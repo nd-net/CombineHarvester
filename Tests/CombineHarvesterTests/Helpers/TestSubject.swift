@@ -5,6 +5,7 @@
 //  Created by Andreas Hartl on 17.06.19.
 //
 
+import CombineHarvester
 import Foundation
 
 enum TestError: Error {
@@ -24,7 +25,7 @@ class TestSubject<Failure>: Subject where Failure: Error {
         }
 
         func cancel() {
-            self.subject.subscriber = nil
+            self.subject.cancel()
         }
     }
 
@@ -54,6 +55,11 @@ class TestSubject<Failure>: Subject where Failure: Error {
 
     func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
         self.subscriber = subscriber.eraseToAnySubscriber()
-        subscriber.receive(subscription: TestSubscription(subject: self))
+        let subscription = TestSubscription(subject: self)
+        subscriber.receive(subscription: subscription)
+    }
+
+    func cancel() {
+        self.subscriber = nil
     }
 }
