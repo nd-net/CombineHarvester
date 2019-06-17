@@ -9,9 +9,10 @@ import Foundation
 
 enum TestError: Error {
     case error
+    case otherError
 }
 
-class TestSubject: Subject {
+class TestSubject<Failure>: Subject where Failure: Error {
     private class TestSubscription: Subscription {
         let subject: TestSubject
 
@@ -28,8 +29,7 @@ class TestSubject: Subject {
     }
 
     typealias Output = String
-
-    typealias Failure = Never
+    typealias Failure = Failure
 
     var values = [Output]()
     var completion = [Subscribers.Completion<Failure>]()

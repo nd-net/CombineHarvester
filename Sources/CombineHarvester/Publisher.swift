@@ -12,7 +12,6 @@
 ///   value*(error|finished)?
 ///
 /// Every `Publisher` must adhere to this contract.
-
 public protocol Publisher {
     /// The kind of values published by this publisher.
     associatedtype Output
