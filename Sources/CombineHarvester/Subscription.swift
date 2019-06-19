@@ -7,7 +7,7 @@
 /// You can only cancel a `Subscription` once.
 ///
 /// Canceling a subscription frees up any resources previously allocated by attaching the `Subscriber`.
-public protocol Subscription: Cancellable, CustomCombineIdentifierConvertible {
+public protocol Subscription: AnyObject, Cancellable, CustomCombineIdentifierConvertible {
     /// Tells a publisher that it may send more values to the subscriber.
     func request(_ demand: Subscribers.Demand)
 }
@@ -16,15 +16,19 @@ public enum Subscriptions {
 }
 
 extension Subscriptions {
-    private struct EmptySubscription: Subscription, Hashable {
-        var combineIdentifier: CombineIdentifier {
-            return CombineIdentifier()
-        }
-
+    private class EmptySubscription: Subscription, Hashable {
         func request(_: Subscribers.Demand) {
         }
 
         func cancel() {
+        }
+
+        func hash(into hasher: inout Hasher) {
+            return hasher.combine(self.combineIdentifier)
+        }
+
+        static func == (lhs: Subscriptions.EmptySubscription, rhs: Subscriptions.EmptySubscription) -> Bool {
+            return lhs.combineIdentifier == rhs.combineIdentifier
         }
     }
 
