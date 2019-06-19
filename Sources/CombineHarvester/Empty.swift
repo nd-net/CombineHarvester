@@ -1,4 +1,3 @@
-
 extension Publishers {
     /// A publisher that never publishes any values, and optionally finishes immediately.
     ///

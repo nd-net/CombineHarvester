@@ -2,7 +2,6 @@
 extension Publishers {
     /// A publisher that converts any failure from the upstream publisher into a new error.
     public struct MapError<Upstream, Failure>: Publisher where Upstream: Publisher, Failure: Error {
-        /// The kind of values published by this publisher.
         public typealias Output = Upstream.Output
 
         /// The publisher from which this publisher receives elements.

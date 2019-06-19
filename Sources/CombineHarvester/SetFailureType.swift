@@ -4,7 +4,6 @@ extension Publishers {
     ///
     /// The publisher cannot actually fail with the specified type and instead just finishes normally. Use this publisher type when you need to match the error types for two mismatched publishers.
     public struct SetFailureType<Upstream, Failure>: Publisher where Upstream: Publisher, Failure: Error, Upstream.Failure == Never {
-        /// The kind of values published by this publisher.
         public typealias Output = Upstream.Output
 
         /// The publisher from which this publisher receives elements.
