@@ -100,31 +100,21 @@ extension Publishers.Just {
         return self
     }
 
-    #if false
-        public func prepend(_ elements: Output...) -> Publishers.Sequence<[Output], Failure> {
-            var sequence = elements
-            sequence.append(self.output)
-            return Publishers.Sequence(sequence: sequence)
-        }
+    public func prepend(_ elements: Output...) -> Publishers.Sequence<[Output], Failure> {
+        return Publishers.Sequence(sequence: elements + [output])
+    }
 
-        public func prepend<S>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element, S: Swift.Sequence {
-            var sequence = Array(elements)
-            sequence.append(self.output)
-            return Publishers.Sequence(sequence: sequence)
-        }
+    public func prepend<S>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element, S: Swift.Sequence {
+        return Publishers.Sequence(sequence: elements + [output])
+    }
 
-        public func append(_ elements: Output...) -> Publishers.Sequence<[Output], Failure> {
-            var sequence = elements
-            sequence.insert(self.output, at: 0)
-            return Publishers.Sequence(sequence: sequence)
-        }
+    public func append(_ elements: Output...) -> Publishers.Sequence<[Output], Failure> {
+        return Publishers.Sequence(sequence: [output] + elements)
+    }
 
-        public func append<S>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element, S: Swift.Sequence {
-            var sequence = [self.output]
-            sequence.append(contentsOf: elements)
-            return Publishers.Sequence(sequence: sequence)
-        }
-    #endif
+    public func append<S>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element, S: Swift.Sequence {
+        return Publishers.Sequence(sequence: [output] + elements)
+    }
 
     public func contains(where predicate: (Output) -> Bool) -> Publishers.Just<Bool> {
         return self.map(predicate)

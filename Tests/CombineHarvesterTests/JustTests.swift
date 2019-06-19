@@ -280,6 +280,20 @@ class JustTests: XCTestCase {
         )
     }
 
+    func testPrepend() {
+        XCTAssertEqual(Publishers.Just("Hello").prepend(), Publishers.Sequence(sequence: ["Hello"]))
+        XCTAssertEqual(Publishers.Just("Hello").prepend("World"), Publishers.Sequence(sequence: ["World", "Hello"]))
+        XCTAssertEqual(Publishers.Just("Hello").prepend([]), Publishers.Sequence(sequence: ["Hello"]))
+        XCTAssertEqual(Publishers.Just("Hello").prepend(["World"]), Publishers.Sequence(sequence: ["World", "Hello"]))
+    }
+
+    func testAppend() {
+        XCTAssertEqual(Publishers.Just("Hello").append(), Publishers.Sequence(sequence: ["Hello"]))
+        XCTAssertEqual(Publishers.Just("Hello").append("World"), Publishers.Sequence(sequence: ["Hello", "World"]))
+        XCTAssertEqual(Publishers.Just("Hello").append([]), Publishers.Sequence(sequence: ["Hello"]))
+        XCTAssertEqual(Publishers.Just("Hello").append(["World"]), Publishers.Sequence(sequence: ["Hello", "World"]))
+    }
+
     func testReduce() {
         XCTAssertEqual(Publishers.Just("Hello").reduce(0) { $0 + $1.count }, Publishers.Once("Hello".count))
 
