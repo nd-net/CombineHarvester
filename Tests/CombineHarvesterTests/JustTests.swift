@@ -50,6 +50,30 @@ class JustTests: XCTestCase {
         XCTAssertEqual(Publishers.Just("Hello").collect(), Publishers.Just(["Hello"]))
     }
 
+    func testCompactMap() {
+        XCTAssertEqual(Publishers.Just("Hello").compactMap { $0 }, Publishers.Optional("Hello"))
+        XCTAssertEqual(Publishers.Just("Hello").compactMap { _ -> Int? in nil }, Publishers.Optional(nil))
+
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryCompactMap { $0 }
+                .mapError { $0 as! TestError },
+            Publishers.Optional("Hello")
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryCompactMap { _ -> Int? in nil }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(nil)
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryCompactMap { _ -> Int? in throw TestError.error }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(.error)
+        )
+    }
+
     func testMin() {
         XCTAssertEqual(Publishers.Just("Hello").min(), Publishers.Just("Hello"))
         XCTAssertEqual(Publishers.Just("Hello").min(by: { _, _ in false }), Publishers.Just("Hello"))
@@ -93,12 +117,107 @@ class JustTests: XCTestCase {
         XCTAssertEqual(Publishers.Just("Hello").count(), Publishers.Just(1))
     }
 
+    func testDrop() {
+        XCTAssertEqual(Publishers.Just("Hello").dropFirst(), Publishers.Optional(nil))
+        XCTAssertEqual(Publishers.Just("Hello").dropFirst(0), Publishers.Optional("Hello"))
+
+        XCTAssertEqual(Publishers.Just("Hello").drop { $0 == "Hello" }, Publishers.Optional(nil))
+        XCTAssertEqual(Publishers.Just("Hello").drop { $0 != "Hello" }, Publishers.Optional("Hello"))
+
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryDrop { $0 == "Hello" }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(nil)
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryDrop { $0 != "Hello" }
+                .mapError { $0 as! TestError },
+            Publishers.Optional("Hello")
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryDrop { _ in throw TestError.error }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(.error)
+        )
+    }
+
     func testFirst() {
         XCTAssertEqual(Publishers.Just("Hello").first(), Publishers.Just("Hello"))
+
+        XCTAssertEqual(Publishers.Just("Hello").first { $0 == "Hello" }, Publishers.Optional("Hello"))
+        XCTAssertEqual(Publishers.Just("Hello").first { $0 != "Hello" }, Publishers.Optional(nil))
+
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryFirst { $0 == "Hello" }
+                .mapError { $0 as! TestError },
+            Publishers.Optional("Hello")
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryFirst { $0 != "Hello" }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(nil)
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryFirst { _ in throw TestError.error }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(.error)
+        )
     }
 
     func testLast() {
         XCTAssertEqual(Publishers.Just("Hello").last(), Publishers.Just("Hello"))
+
+        XCTAssertEqual(Publishers.Just("Hello").last { $0 == "Hello" }, Publishers.Optional("Hello"))
+        XCTAssertEqual(Publishers.Just("Hello").last { $0 != "Hello" }, Publishers.Optional(nil))
+
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryLast { $0 == "Hello" }
+                .mapError { $0 as! TestError },
+            Publishers.Optional("Hello")
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryLast { $0 != "Hello" }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(nil)
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryLast { _ in throw TestError.error }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(.error)
+        )
+    }
+
+    func testFilter() {
+        XCTAssertEqual(Publishers.Just("Hello").filter { $0 == "Hello" }, Publishers.Optional("Hello"))
+        XCTAssertEqual(Publishers.Just("Hello").filter { $0 != "Hello" }, Publishers.Optional(nil))
+
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryFilter { $0 == "Hello" }
+                .mapError { $0 as! TestError },
+            Publishers.Optional("Hello")
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryFilter { $0 != "Hello" }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(nil)
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryFilter { _ in throw TestError.error }
+                .mapError { $0 as! TestError },
+            Publishers.Optional(.error)
+        )
     }
 
     func testIgnoreOutput() {
@@ -124,6 +243,41 @@ class JustTests: XCTestCase {
 
     func testMapError() {
         XCTAssertEqual(Publishers.Just("Hello").mapError { _ in TestError.error }, Publishers.Once("Hello"))
+    }
+
+    func testOutput() {
+        XCTAssertEqual(Publishers.Just("Hello").output(at: 0), Publishers.Optional("Hello"))
+        XCTAssertEqual(Publishers.Just("Hello").output(at: 1), Publishers.Optional(nil))
+
+        XCTAssertEqual(Publishers.Just("Hello").output(in: ...1), Publishers.Optional("Hello"))
+        XCTAssertEqual(Publishers.Just("Hello").output(in: 1...), Publishers.Optional(nil))
+    }
+
+    func testPrefix() {
+        XCTAssertEqual(Publishers.Just("Hello").prefix(0), Publishers.Optional(nil))
+        XCTAssertEqual(Publishers.Just("Hello").prefix(1), Publishers.Optional("Hello"))
+
+        XCTAssertEqual(Publishers.Just("Hello").prefix(while: { $0 == "Hello" }), Publishers.Optional("Hello"))
+        XCTAssertEqual(Publishers.Just("Hello").prefix(while: { $0 != "Hello" }), Publishers.Optional(nil))
+
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryPrefix(while: { $0 == "Hello" })
+                .mapError { $0 as! TestError },
+            Publishers.Optional("Hello")
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryPrefix(while: { $0 != "Hello" })
+                .mapError { $0 as! TestError },
+            Publishers.Optional(nil)
+        )
+        XCTAssertEqual(
+            Publishers.Just("Hello")
+                .tryPrefix(while: { _ in throw TestError.error })
+                .mapError { $0 as! TestError },
+            Publishers.Optional(.error)
+        )
     }
 
     func testReduce() {

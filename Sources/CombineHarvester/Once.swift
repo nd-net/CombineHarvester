@@ -81,30 +81,28 @@ extension Publishers.Once {
         return self.map { [$0] }
     }
 
-    #if false
+    // swiftformat:disable:next typeSugar
+    public func compactMap<T>(_ transform: (Output) -> T?) -> Publishers.Optional<T, Failure> {
         // swiftformat:disable:next typeSugar
-        public func compactMap<T>(_ transform: (Output) -> T?) -> Publishers.Optional<T, Failure> {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(self.result.map(transform))
-        }
+        return Publishers.Optional(self.result.map(transform))
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func tryCompactMap<T>(_ transform: (Output) throws -> T?) -> Publishers.Optional<T, Error> {
-            switch self.result {
-            case let .failure(failure):
+    // swiftformat:disable:next typeSugar
+    public func tryCompactMap<T>(_ transform: (Output) throws -> T?) -> Publishers.Optional<T, Error> {
+        switch self.result {
+        case let .failure(failure):
+            // swiftformat:disable:next typeSugar
+            return Publishers.Optional(failure)
+        case let .success(value):
+            do {
                 // swiftformat:disable:next typeSugar
-                return Publishers.Optional(failure)
-            case let .success(value):
-                do {
-                    // swiftformat:disable:next typeSugar
-                    return Publishers.Optional(try transform(value))
-                } catch {
-                    // swiftformat:disable:next typeSugar
-                    return Publishers.Optional(error)
-                }
+                return Publishers.Optional(try transform(value))
+            } catch {
+                // swiftformat:disable:next typeSugar
+                return Publishers.Optional(error)
             }
         }
-    #endif
+    }
 
     public func min(by _: (Output, Output) -> Bool) -> Publishers.Once<Output, Failure> {
         return self
@@ -134,79 +132,73 @@ extension Publishers.Once {
         return self.map { _ in 1 }
     }
 
-    #if false
-        // swiftformat:disable:next typeSugar
-        public func dropFirst(_ count: Int = 1) -> Publishers.Optional<Output, Failure> {
-            return self.filter { _ in count < 1 }
-        }
+    // swiftformat:disable:next typeSugar
+    public func dropFirst(_ count: Int = 1) -> Publishers.Optional<Output, Failure> {
+        return self.filter { _ in count < 1 }
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func drop(while predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
-            return self.filter { !predicate($0) }
-        }
+    // swiftformat:disable:next typeSugar
+    public func drop(while predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
+        return self.filter { !predicate($0) }
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func tryDrop(while predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-            return self.tryFilter { try !predicate($0) }
-        }
-    #endif
+    // swiftformat:disable:next typeSugar
+    public func tryDrop(while predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
+        return self.tryFilter { try !predicate($0) }
+    }
 
     public func first() -> Publishers.Once<Output, Failure> {
         return self
     }
 
-    #if false
-        // swiftformat:disable:next typeSugar
-        public func first(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
-            return self.filter(predicate)
-        }
+    // swiftformat:disable:next typeSugar
+    public func first(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
+        return self.filter(predicate)
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func tryFirst(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-            return self.tryFilter(predicate)
-        }
-    #endif
+    // swiftformat:disable:next typeSugar
+    public func tryFirst(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
+        return self.tryFilter(predicate)
+    }
 
     public func last() -> Publishers.Once<Output, Failure> {
         return self
     }
 
-    #if false
-        // swiftformat:disable:next typeSugar
-        public func last(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
-            return self.filter(predicate)
-        }
+    // swiftformat:disable:next typeSugar
+    public func last(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
+        return self.filter(predicate)
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func tryLast(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-            return self.tryFilter(predicate)
-        }
+    // swiftformat:disable:next typeSugar
+    public func tryLast(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
+        return self.tryFilter(predicate)
+    }
 
+    // swiftformat:disable:next typeSugar
+    public func filter(_ isIncluded: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
         // swiftformat:disable:next typeSugar
-        public func filter(_ isIncluded: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
+        return Publishers.Optional(self.result.map { value in
+            isIncluded(value) ? value : nil
+        })
+    }
+
+    // swiftformat:disable:next typeSugar
+    public func tryFilter(_ isIncluded: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
+        switch self.result {
+        case let .failure(error):
             // swiftformat:disable:next typeSugar
-            return Publishers.Optional(self.result.map { value in
-                isIncluded(value) ? value : nil
-            })
-        }
-
-        // swiftformat:disable:next typeSugar
-        public func tryFilter(_ isIncluded: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-            switch self.result {
-            case let .failure(error):
+            return Publishers.Optional(error)
+        case let .success(value):
+            do {
+                // swiftformat:disable:next typeSugar
+                return Publishers.Optional(try isIncluded(value) ? value : nil)
+            } catch {
                 // swiftformat:disable:next typeSugar
                 return Publishers.Optional(error)
-            case let .success(value):
-                do {
-                    // swiftformat:disable:next typeSugar
-                    return Publishers.Optional(try isIncluded(value) ? value : nil)
-                } catch {
-                    // swiftformat:disable:next typeSugar
-                    return Publishers.Optional(error)
-                }
             }
         }
-    #endif
+    }
 
     public func ignoreOutput() -> Publishers.Empty<Output, Failure> {
         return Publishers.Empty()
@@ -233,32 +225,30 @@ extension Publishers.Once {
         return Publishers.Once(self.result.mapError(transform))
     }
 
-    #if false
-        // swiftformat:disable:next typeSugar
-        public func output(at index: Int) -> Publishers.Optional<Output, Failure> {
-            return self.output(in: index...index)
-        }
+    // swiftformat:disable:next typeSugar
+    public func output(at index: Int) -> Publishers.Optional<Output, Failure> {
+        return self.output(in: index...index)
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func output<R>(in range: R) -> Publishers.Optional<Output, Failure> where R: RangeExpression, R.Bound == Int {
-            return self.filter { _ in range.contains(0) }
-        }
+    // swiftformat:disable:next typeSugar
+    public func output<R>(in range: R) -> Publishers.Optional<Output, Failure> where R: RangeExpression, R.Bound == Int {
+        return self.filter { _ in range.contains(0) }
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func prefix(_ maxLength: Int) -> Publishers.Optional<Output, Failure> {
-            return self.output(in: 0..<maxLength)
-        }
+    // swiftformat:disable:next typeSugar
+    public func prefix(_ maxLength: Int) -> Publishers.Optional<Output, Failure> {
+        return self.output(in: 0..<maxLength)
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func prefix(while predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
-            return self.filter(predicate)
-        }
+    // swiftformat:disable:next typeSugar
+    public func prefix(while predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
+        return self.filter(predicate)
+    }
 
-        // swiftformat:disable:next typeSugar
-        public func tryPrefix(while predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-            return self.tryFilter(predicate)
-        }
-    #endif
+    // swiftformat:disable:next typeSugar
+    public func tryPrefix(while predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
+        return self.tryFilter(predicate)
+    }
 
     public func reduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Publishers.Once<T, Failure> {
         return self.map { nextPartialResult(initialResult, $0) }
