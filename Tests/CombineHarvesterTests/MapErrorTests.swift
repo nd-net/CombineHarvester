@@ -10,8 +10,8 @@ import XCTest
 
 class MapErrorTests: XCTestCase {
     func testFail() {
-        let subject = TestSubject<TestError>()
-        let receiver = TestSubject<TestError>()
+        let subject = TestSubject<String, TestError>()
+        let receiver = TestSubject<String, TestError>()
 
         let subscription = subject.mapError { $0 == .error ? .otherError : $0 }
             .subscribe(receiver)
@@ -25,8 +25,8 @@ class MapErrorTests: XCTestCase {
     }
 
     func testDoNotFail() {
-        let subject = TestSubject<TestError>()
-        let receiver = TestSubject<TestError>()
+        let subject = TestSubject<String, TestError>()
+        let receiver = TestSubject<String, TestError>()
 
         let subscription = subject.mapError { $0 == .error ? .otherError : $0 }
             .subscribe(receiver)

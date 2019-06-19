@@ -15,7 +15,7 @@ class AssignTests: XCTestCase {
 
     func testAssign() {
         let root = Anything()
-        let subject = TestSubject<Never>()
+        let subject = TestSubject<String, Never>()
 
         let cancellable = subject.assign(to: \.value, on: root)
         subject.send("ACME Corporation")

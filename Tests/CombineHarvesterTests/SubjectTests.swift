@@ -10,8 +10,8 @@ import XCTest
 
 class SubjectTests: XCTestCase {
     func testSubscribeToSubject() {
-        let subject = TestSubject<Never>()
-        let publisher = TestSubject<Never>()
+        let subject = TestSubject<String, Never>()
+        let publisher = TestSubject<String, Never>()
 
         let cancellable = publisher.subscribe(subject)
         publisher.send("Hello")
@@ -24,8 +24,8 @@ class SubjectTests: XCTestCase {
     }
 
     func testSubscribeToSubjectAndCancel() {
-        let subject = TestSubject<Never>()
-        let publisher = TestSubject<Never>()
+        let subject = TestSubject<String, Never>()
+        let publisher = TestSubject<String, Never>()
 
         let cancellable = publisher.subscribe(subject)
         publisher.send("Hello")

@@ -9,37 +9,16 @@ import XCTest
 @testable import CombineHarvester
 
 class AnySubscriberTests: XCTestCase {
-    private class TestSubscriber: Subscriber {
-        typealias Input = Int
-        typealias Failure = TestError
-        var subscriptions = [Subscription]()
-        var values = [Input]()
-        var completions = [Subscribers.Completion<Failure>]()
-
-        let combineIdentifier = CombineIdentifier(self as AnyObject)
-
-        func receive(subscription: Subscription) {
-            self.subscriptions.append(subscription)
-        }
-
-        func receive(_ input: Input) -> Subscribers.Demand {
-            self.values.append(input)
-            return .max(input)
-        }
-
-        func receive(completion: Subscribers.Completion<TestError>) {
-            self.completions.append(completion)
-        }
-    }
-
     func testDelegation() {
-        var subscriber = TestSubscriber()
+        var subscriber = TestSubscriber<Int, TestError>()
         var underTest = AnySubscriber(subscriber)
 
         XCTAssertEqual(underTest.combineIdentifier, subscriber.combineIdentifier)
 
         underTest.receive(subscription: Subscriptions.empty)
+        subscriber.receiveResult = .max(0)
         XCTAssertEqual(underTest.receive(0), .max(0))
+        subscriber.receiveResult = .max(10)
         XCTAssertEqual(underTest.receive(10), .max(10))
         underTest.receive(completion: .finished)
         underTest.receive(completion: .failure(.error))
@@ -48,13 +27,15 @@ class AnySubscriberTests: XCTestCase {
         XCTAssertEqual(subscriber.values, [0, 10])
         XCTAssertEqual(subscriber.completions, [Subscribers.Completion<TestError>.finished, Subscribers.Completion<TestError>.failure(.error)])
 
-        subscriber = TestSubscriber()
+        subscriber = TestSubscriber<Int, TestError>()
         underTest = AnySubscriber(receiveSubscription: subscriber.receive(subscription:), receiveValue: subscriber.receive, receiveCompletion: subscriber.receive(completion:))
 
         XCTAssertNotEqual(underTest.combineIdentifier, subscriber.combineIdentifier)
 
         underTest.receive(subscription: Subscriptions.empty)
+        subscriber.receiveResult = .max(0)
         XCTAssertEqual(underTest.receive(0), .max(0))
+        subscriber.receiveResult = .max(10)
         XCTAssertEqual(underTest.receive(10), .max(10))
         underTest.receive(completion: .finished)
         underTest.receive(completion: .failure(.error))

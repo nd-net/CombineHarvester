@@ -10,7 +10,7 @@ import XCTest
 
 class EmptyTests: XCTestCase {
     func testCompleteImmediately() {
-        let subject = TestSubject<Never>()
+        let subject = TestSubject<String, Never>()
 
         let underTest = Publishers.Empty(completeImmediately: true, outputType: String.self, failureType: Never.self)
         _ = underTest.subscribe(subject)
@@ -20,7 +20,7 @@ class EmptyTests: XCTestCase {
     }
 
     func testDoNotCompleteImmediately() {
-        let subject = TestSubject<Never>()
+        let subject = TestSubject<String, Never>()
 
         let underTest = Publishers.Empty(completeImmediately: false, outputType: String.self, failureType: Never.self)
         _ = underTest.subscribe(subject)

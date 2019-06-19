@@ -13,7 +13,7 @@ enum TestError: Error {
     case otherError
 }
 
-class TestSubject<Failure>: Subject where Failure: Error {
+class TestSubject<Output, Failure: Error>: Subject {
     private class TestSubscription: Subscription {
         let subject: TestSubject
 
@@ -28,9 +28,6 @@ class TestSubject<Failure>: Subject where Failure: Error {
             self.subject.cancel()
         }
     }
-
-    typealias Output = String
-    typealias Failure = Failure
 
     var values = [Output]()
     var completion = [Subscribers.Completion<Failure>]()

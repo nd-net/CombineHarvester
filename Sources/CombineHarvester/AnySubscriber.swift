@@ -23,9 +23,9 @@ public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible
         }
     }
 
-    private let didReceiveSubscription: (Subscription) -> Void
-    private let didReceive: (Input) -> Subscribers.Demand
-    private let didReceiveCompletion: (Subscribers.Completion<Failure>) -> Void
+    private let receiveSubscription: (Subscription) -> Void
+    private let receiveValue: (Input) -> Subscribers.Demand
+    private let receiveCompletion: (Subscribers.Completion<Failure>) -> Void
     public let combineIdentifier: CombineIdentifier
 
     fileprivate let subscriptionBox = SubscriptionBox()
@@ -71,9 +71,9 @@ public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible
     }
 
     private init(receiveSubscription: @escaping ((Subscription) -> Void), receiveValue: @escaping ((Input) -> Subscribers.Demand), receiveCompletion: @escaping ((Subscribers.Completion<Failure>) -> Void), combineIdentifier: CombineIdentifier) {
-        self.didReceiveSubscription = receiveSubscription
-        self.didReceive = receiveValue
-        self.didReceiveCompletion = receiveCompletion
+        self.receiveSubscription = receiveSubscription
+        self.receiveValue = receiveValue
+        self.receiveCompletion = receiveCompletion
         self.combineIdentifier = combineIdentifier
     }
 
@@ -83,15 +83,15 @@ public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible
 
     public func receive(subscription: Subscription) {
         self.subscriptionBox.subscription = subscription
-        self.didReceiveSubscription(subscription)
+        self.receiveSubscription(subscription)
     }
 
     public func receive(_ value: Input) -> Subscribers.Demand {
-        return self.didReceive(value)
+        return self.receiveValue(value)
     }
 
     public func receive(completion: Subscribers.Completion<Failure>) {
-        self.didReceiveCompletion(completion)
+        self.receiveCompletion(completion)
     }
 }
 

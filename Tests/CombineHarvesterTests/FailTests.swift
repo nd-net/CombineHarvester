@@ -10,7 +10,7 @@ import XCTest
 
 class FailTests: XCTestCase {
     func testFail() {
-        let subject = TestSubject<TestError>()
+        let subject = TestSubject<String, TestError>()
 
         let underTest = Publishers.Fail(outputType: String.self, failure: TestError.error)
         _ = underTest.subscribe(subject)

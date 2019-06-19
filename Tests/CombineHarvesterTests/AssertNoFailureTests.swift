@@ -10,8 +10,8 @@ import XCTest
 
 class AssertNoFailureTests: XCTestCase {
     func testFail() {
-        let subject = TestSubject<TestError>()
-        let receiver = TestSubject<Never>()
+        let subject = TestSubject<String, TestError>()
+        let receiver = TestSubject<String, Never>()
 
         let subscription = subject.assertNoFailure("Prefix")
             .subscribe(receiver)
@@ -24,8 +24,8 @@ class AssertNoFailureTests: XCTestCase {
     }
 
     func testDoNotFail() {
-        let subject = TestSubject<TestError>()
-        let receiver = TestSubject<Never>()
+        let subject = TestSubject<String, TestError>()
+        let receiver = TestSubject<String, Never>()
 
         let subscription = subject.assertNoFailure("Prefix")
             .subscribe(receiver)
