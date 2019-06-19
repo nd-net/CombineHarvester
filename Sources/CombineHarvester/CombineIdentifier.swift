@@ -1,36 +1,30 @@
 public struct CombineIdentifier: Hashable, CustomStringConvertible {
-    private let identifier: AnyObject?
+    private let identifier: AnyObject
 
     public init() {
-        self.identifier = nil
+        class Identifier {
+        }
+        self.init(Identifier())
     }
 
     public init(_ obj: AnyObject) {
         self.identifier = obj
     }
 
+    private var opaqueIdentifier: UnsafeMutableRawPointer {
+        return Unmanaged.passUnretained(self.identifier).toOpaque()
+    }
+
     public var description: String {
-        guard let identifier = self.identifier else {
-            return "<anonymous>"
-        }
-        if let convertible = identifier as? CustomStringConvertible {
-            return convertible.description
-        }
-        let address = Unmanaged.passUnretained(identifier).toOpaque()
-        return "CombineIdentifier: \(address.debugDescription)"
+        return "CombineIdentifier: \(self.opaqueIdentifier.debugDescription)"
     }
 
     public func hash(into hasher: inout Hasher) {
-        if let hashable = self.identifier as? AnyHashable {
-            hashable.hash(into: &hasher)
-        }
+        hasher.combine(self.opaqueIdentifier)
     }
 
     public static func == (lhs: CombineIdentifier, rhs: CombineIdentifier) -> Bool {
-        guard let l = lhs.identifier as? AnyHashable, let r = rhs.identifier as? AnyHashable else {
-            return false
-        }
-        return l == r
+        return lhs.identifier === rhs.identifier
     }
 }
 

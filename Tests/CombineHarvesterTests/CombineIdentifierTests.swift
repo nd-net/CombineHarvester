@@ -21,9 +21,8 @@ class CombineIdentifierTests: XCTestCase {
     func testDescription() {
         class Empty {
         }
+        XCTAssert(CombineIdentifier().description.starts(with: "CombineIdentifier: 0x"), "Combine identifiers always show memory address for empty inits")
 
-        XCTAssertEqual(CombineIdentifier().description, "<anonymous>")
-        XCTAssertEqual(CombineIdentifier("obj" as NSString).description, "obj", "description gets forwarded for CustomStringConvertible")
-        XCTAssert(CombineIdentifier(Empty()).description.starts(with: "CombineIdentifier: 0x"), "classes that are not CustomStringConvertible show their opaque address")
+        XCTAssert(CombineIdentifier(Empty()).description.starts(with: "CombineIdentifier: 0x"), "Combine identifiers always show memory address non-empty inits")
     }
 }
