@@ -10,19 +10,9 @@ extension Publishers {
         /// The closure that transforms elements from the upstream publisher.
         public let transform: (Upstream.Output) -> Output
 
-        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
-        ///
-        /// - SeeAlso: `subscribe(_:)`
-        /// - Parameters:
-        ///     - subscriber: The subscriber to attach to this `Publisher`.
-        ///                   once attached it can begin to receive values.
         public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, Upstream.Failure == S.Failure {
-            let nestedSubscriber = AnySubscriber<Upstream.Output, Upstream.Failure>(
-                receiveSubscription: subscriber.receive(subscription:),
-                receiveValue: { subscriber.receive(self.transform($0)) },
-                receiveCompletion: subscriber.receive(completion:)
-            )
-            self.upstream.receive(subscriber: nestedSubscriber)
+            Publishers.CompactMap(upstream: self.upstream, transform: self.transform)
+                .receive(subscriber: subscriber)
         }
     }
 
@@ -37,32 +27,8 @@ extension Publishers {
         public let transform: (Upstream.Output) throws -> Output
 
         public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, S.Failure == Publishers.TryMap<Upstream, Output>.Failure {
-            var subscription: Subscription?
-            let nestedSubscriber = AnySubscriber<Upstream.Output, Upstream.Failure>(
-                receiveSubscription: {
-                    subscription = $0
-                    subscriber.receive(subscription: $0)
-                },
-                receiveValue: {
-                    do {
-                        return subscriber.receive(try self.transform($0))
-                    } catch {
-                        subscription?.cancel()
-                        subscriber.receive(completion: .failure(error))
-                        return .none
-                    }
-                },
-                receiveCompletion: {
-                    subscription = nil
-                    switch $0 {
-                    case .finished:
-                        subscriber.receive(completion: .finished)
-                    case let .failure(error):
-                        subscriber.receive(completion: .failure(error))
-                    }
-                }
-            )
-            upstream.receive(subscriber: nestedSubscriber)
+            Publishers.TryCompactMap(upstream: self.upstream, transform: self.transform)
+                .receive(subscriber: subscriber)
         }
     }
 }
