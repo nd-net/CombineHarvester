@@ -8,9 +8,7 @@
 import XCTest
 @testable import CombineHarvester
 
-struct TestPublisher<Failure>: Publisher, Equatable where Failure: Error & Equatable {
-    typealias Output = String
-
+struct TestPublisher<Output, Failure>: Publisher, Equatable where Output: Equatable, Failure: Error & Equatable {
     var content: [Result<Output, Failure>]
 
     init(_ content: [Result<Output, Failure>]) {
