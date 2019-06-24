@@ -8,55 +8,17 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
-        private class NestedSubscription: Subscription {
-            let subscription: Subscription
-            let onCancel: () -> Void
-
-            init(subscription: Subscription, onCancel: @escaping () -> Void) {
-                self.subscription = subscription
-                self.onCancel = onCancel
-            }
-
-            func request(_ demand: Subscribers.Demand) {
-                self.subscription.request(demand)
-            }
-
-            func cancel() {
-                self.subscription.cancel()
-                self.onCancel()
-            }
-
-            deinit {
-                self.cancel()
-            }
-        }
-
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
-            var nestedSubscription = Atomic<NestedSubscription?>(value: nil)
-
-            let nestedSubscriber = AnySubscriber<Upstream.Output, Upstream.Failure>(
-                receiveSubscription: {
-                    let nested = NestedSubscription(subscription: $0, onCancel: { nestedSubscription.value = nil })
-                    nestedSubscription.value = nested
-                    subscriber.receive(subscription: nested)
-                },
-                receiveValue: { value in
-                    let existingSubscription = nestedSubscription.swap(nil)
-                    if existingSubscription != nil {
-                        _ = subscriber.receive(value)
-                        subscriber.receive(completion: .finished)
-                    }
-                    return .none
-                },
-                receiveCompletion: {
-                    guard nestedSubscription.swap(nil) != nil else {
-                        return
-                    }
+            let nestedSubscriber = TransformingSubscriber<Output, Failure, Output, Failure>(
+                subscriber: subscriber,
+                transformRequest: { [.demand($0)] },
+                transformValue: { [.value($0), .finished] },
+                transformCompletion: {
                     switch $0 {
                     case .finished:
-                        subscriber.receive(completion: .finished)
+                        return [.finished]
                     case let .failure(error):
-                        subscriber.receive(completion: .failure(error))
+                        return [.failure(error)]
                     }
                 }
             )

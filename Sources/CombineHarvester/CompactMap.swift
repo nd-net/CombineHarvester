@@ -11,17 +11,25 @@ extension Publishers {
         public let transform: (Upstream.Output) -> Output?
 
         public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, Upstream.Failure == S.Failure {
-            let nestedSubscriber = AnySubscriber<Upstream.Output, Upstream.Failure>(
-                receiveSubscription: subscriber.receive(subscription:),
-                receiveValue: { value in
+            let transformingSubscriber = TransformingSubscriber<Upstream.Output, Upstream.Failure, Output, Failure>(
+                subscriber: subscriber,
+                transformRequest: { [.demand($0)] },
+                transformValue: { value in
                     guard let transformed = self.transform(value) else {
-                        return .max(1)
+                        return [.demand(.max(1))]
                     }
-                    return subscriber.receive(transformed)
-                },
-                receiveCompletion: subscriber.receive(completion:)
+                    return [.value(transformed)]
+                }, transformCompletion: { completion in
+                    switch completion {
+                    case .finished:
+                        return [.finished]
+                    case let .failure(error):
+                        return [.failure(error)]
+                    }
+                }
             )
-            self.upstream.receive(subscriber: nestedSubscriber)
+
+            upstream.receive(subscriber: transformingSubscriber)
         }
     }
 
@@ -37,36 +45,31 @@ extension Publishers {
         /// If this closure throws an error, the publisher fails.
         public let transform: (Upstream.Output) throws -> Output?
 
-        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, S.Failure == Publishers.TryCompactMap<Upstream, Output>.Failure {
-            var subscription: Subscription?
-            let nestedSubscriber = AnySubscriber<Upstream.Output, Upstream.Failure>(
-                receiveSubscription: {
-                    subscription = $0
-                    subscriber.receive(subscription: $0)
-                },
-                receiveValue: { value in
+        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, S.Failure == Failure {
+            let transformingSubscriber = TransformingSubscriber<Upstream.Output, Upstream.Failure, Output, Failure>(
+                subscriber: subscriber,
+                transformRequest: { [.demand($0)] },
+                transformValue: { value in
                     do {
                         guard let transformed = try self.transform(value) else {
-                            return .max(1)
+                            return [.demand(.max(1))]
                         }
-                        return subscriber.receive(transformed)
+                        return [.value(transformed)]
                     } catch {
-                        subscription?.cancel()
-                        subscriber.receive(completion: .failure(error))
-                        return .none
+                        return [.failure(error)]
                     }
-                },
-                receiveCompletion: {
-                    subscription = nil
-                    switch $0 {
+
+                }, transformCompletion: { completion in
+                    switch completion {
                     case .finished:
-                        subscriber.receive(completion: .finished)
+                        return [.finished]
                     case let .failure(error):
-                        subscriber.receive(completion: .failure(error))
+                        return [.failure(error)]
                     }
                 }
             )
-            upstream.receive(subscriber: nestedSubscriber)
+
+            upstream.receive(subscriber: transformingSubscriber)
         }
     }
 }
