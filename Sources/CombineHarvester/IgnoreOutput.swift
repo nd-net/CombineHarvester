@@ -9,8 +9,10 @@ extension Publishers {
         public let upstream: Upstream
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, S.Input == Output {
-            let nestedSubscriber = AnySubscriber<Upstream.Output, Failure>(receiveSubscription: subscriber.receive(subscription:), receiveValue: nil, receiveCompletion: subscriber.receive(completion:))
-            self.upstream.receive(subscriber: nestedSubscriber)
+            self.upstream
+                .compactMap { _ in nil }
+                .last()
+                .subscribe(subscriber)
         }
     }
 }

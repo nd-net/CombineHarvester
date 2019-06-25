@@ -17,20 +17,9 @@ extension Publishers {
         }
 
         public func receive<S>(subscriber: S) where Failure == S.Failure, S: Subscriber, Output == S.Input {
-            let nestedSubscriber = AnySubscriber<Upstream.Output, Upstream.Failure>(
-                receiveSubscription: subscriber.receive(subscription:),
-                receiveValue: subscriber.receive,
-                receiveCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        subscriber.receive(completion: .finished)
-                    case .failure:
-                        // this cannot happen aince the failure is Never
-                        fatalError()
-                    }
-                }
-            )
-            self.upstream.receive(subscriber: nestedSubscriber)
+            self.upstream
+                .mapError { never in never as! Failure }
+                .subscribe(subscriber)
         }
 
         public func setFailureType<E>(to _: E.Type) -> Publishers.SetFailureType<Upstream, E> where E: Error {

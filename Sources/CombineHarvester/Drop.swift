@@ -17,7 +17,7 @@ extension Publishers {
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             guard self.count > 0 else {
-                self.upstream.receive(subscriber: subscriber)
+                self.upstream.subscribe(subscriber)
                 return
             }
             var remaining = self.count

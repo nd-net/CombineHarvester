@@ -25,7 +25,7 @@ extension Publishers {
         ///     - subscriber: The subscriber to attach to this `Publisher`.
         ///                   once attached it can begin to receive values.
         public func receive<S>(subscriber: S) where S: Subscriber, DeferredPublisher.Failure == S.Failure, DeferredPublisher.Output == S.Input {
-            self.createPublisher().receive(subscriber: subscriber)
+            self.createPublisher().subscribe(subscriber)
         }
     }
 }

@@ -29,7 +29,7 @@ extension Publishers {
                 }
             )
 
-            upstream.receive(subscriber: transformingSubscriber)
+            upstream.subscribe(transformingSubscriber)
         }
     }
 
@@ -58,7 +58,6 @@ extension Publishers {
                     } catch {
                         return [.failure(error)]
                     }
-
                 }, transformCompletion: { completion in
                     switch completion {
                     case .finished:
@@ -69,7 +68,7 @@ extension Publishers {
                 }
             )
 
-            upstream.receive(subscriber: transformingSubscriber)
+            upstream.subscribe(transformingSubscriber)
         }
     }
 }

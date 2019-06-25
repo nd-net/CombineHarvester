@@ -12,20 +12,8 @@ extension Publishers {
         public let isIncluded: (Upstream.Output) -> Bool
 
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
-            let nestedSubscriber = TransformingSubscriber<Output, Failure, Output, Failure>(
-                subscriber: subscriber,
-                transformRequest: { [.demand($0)] },
-                transformValue: { self.isIncluded($0) ? [.value($0)] : [.demand(.max(1))] },
-                transformCompletion: {
-                    switch $0 {
-                    case .finished:
-                        return [.finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
-                }
-            )
-            upstream.subscribe(nestedSubscriber)
+            self.upstream.compactMap { self.isIncluded($0) ? $0 : nil }
+                .subscribe(subscriber)
         }
     }
 
@@ -41,26 +29,8 @@ extension Publishers {
         public let isIncluded: (Upstream.Output) throws -> Bool
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryFilter<Upstream>.Failure {
-            let nestedSubscriber = TransformingSubscriber<Output, Upstream.Failure, Output, Failure>(
-                subscriber: subscriber,
-                transformRequest: { [.demand($0)] },
-                transformValue: { value in
-                    do {
-                        return try self.isIncluded(value) ? [.value(value)] : [.demand(.max(1))]
-                    } catch {
-                        return [.failure(error)]
-                    }
-                },
-                transformCompletion: {
-                    switch $0 {
-                    case .finished:
-                        return [.finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
-                }
-            )
-            upstream.subscribe(nestedSubscriber)
+            self.upstream.tryCompactMap { try self.isIncluded($0) ? $0 : nil }
+                .subscribe(subscriber)
         }
     }
 }

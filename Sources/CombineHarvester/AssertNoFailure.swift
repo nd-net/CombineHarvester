@@ -20,19 +20,9 @@ extension Publishers {
         public let line: UInt
 
         public func receive<S>(subscriber: S) where S: Subscriber, Output == S.Input, S.Failure == Failure {
-            let nestedSubscriber = AnySubscriber<Upstream.Output, Upstream.Failure>(
-                receiveSubscription: subscriber.receive(subscription:),
-                receiveValue: subscriber.receive,
-                receiveCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        subscriber.receive(completion: .finished)
-                    case let .failure(error):
-                        fatalError("\(self.prefix) Received .failure(\(error))", file: self.file, line: self.line)
-                    }
-                }
-            )
-            self.upstream.receive(subscriber: nestedSubscriber)
+            self.upstream.mapError { error in
+                fatalError("\(self.prefix) Received .failure(\(error))", file: self.file, line: self.line)
+            }.subscribe(subscriber)
         }
     }
 }

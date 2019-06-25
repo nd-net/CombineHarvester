@@ -9,28 +9,10 @@ extension Publishers {
         public let upstream: Upstream
 
         public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, S.Input == Output {
-            var didRequest = false
-            var count = 0
-            self.upstream.subscribe(TransformingSubscriber(
-                subscriber: subscriber,
-                transformRequest: { demand in
-                    guard demand > .none, !didRequest else {
-                        return [.demand(.none)]
-                    }
-                    didRequest = true
-                    return [.demand(.unlimited)]
-                }, transformValue: { _ in
-                    count += 1
-                    return [.demand(.unlimited)]
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        return [.value(count), .finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
-                }
-            ))
+            return self.upstream.reduce(0) { counter, _ in counter + 1 }
+                .last()
+                .replaceEmpty(with: 0)
+                .subscribe(subscriber)
         }
     }
 }

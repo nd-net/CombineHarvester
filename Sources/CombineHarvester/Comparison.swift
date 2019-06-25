@@ -12,38 +12,18 @@ extension Publishers {
         public let areInIncreasingOrder: (Upstream.Output, Upstream.Output) -> Bool
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
-            var didRequest = false
-            var result: Output?
-            self.upstream.subscribe(TransformingSubscriber(
-                subscriber: subscriber,
-                transformRequest: { demand in
-                    guard demand > .none, !didRequest else {
-                        return [.demand(.none)]
-                    }
-                    didRequest = true
-                    return [.demand(.unlimited)]
-                }, transformValue: { value in
-                    guard let existing = result else {
-                        result = value
-                        return [.demand(.unlimited)]
-                    }
-                    if self.areInIncreasingOrder(existing, value) {
-                        result = value
-                    }
-                    return [.demand(.unlimited)]
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        if let result = result {
-                            return [.value(result), .finished]
-                        } else {
-                            return [.finished]
-                        }
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
+            self.upstream.reduce(nil as Output?) { prev, cur in
+                guard let prev = prev else {
+                    return cur
                 }
-            ))
+                if self.areInIncreasingOrder(prev, cur) {
+                    return cur
+                } else {
+                    return prev
+                }
+            }.last()
+                .compactMap { $0 }
+                .subscribe(subscriber)
         }
     }
 
@@ -59,42 +39,18 @@ extension Publishers {
         public let areInIncreasingOrder: (Upstream.Output, Upstream.Output) throws -> Bool
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryComparison<Upstream>.Failure {
-            var didRequest = false
-            var result: Output?
-            self.upstream.subscribe(TransformingSubscriber(
-                subscriber: subscriber,
-                transformRequest: { demand in
-                    guard demand > .none, !didRequest else {
-                        return [.demand(.none)]
-                    }
-                    didRequest = true
-                    return [.demand(.unlimited)]
-                }, transformValue: { value in
-                    guard let existing = result else {
-                        result = value
-                        return [.demand(.unlimited)]
-                    }
-                    do {
-                        if try self.areInIncreasingOrder(existing, value) {
-                            result = value
-                        }
-                        return [.demand(.unlimited)]
-                    } catch {
-                        return [.failure(error)]
-                    }
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        if let result = result {
-                            return [.value(result), .finished]
-                        } else {
-                            return [.finished]
-                        }
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
+            self.upstream.tryReduce(nil as Output?) { prev, cur in
+                guard let prev = prev else {
+                    return cur
                 }
-            ))
+                if try self.areInIncreasingOrder(prev, cur) {
+                    return cur
+                } else {
+                    return prev
+                }
+            }.last()
+                .compactMap { $0 }
+                .subscribe(subscriber)
         }
     }
 }

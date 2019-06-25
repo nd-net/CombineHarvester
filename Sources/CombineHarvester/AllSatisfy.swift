@@ -14,29 +14,10 @@ extension Publishers {
         public let predicate: (Upstream.Output) -> Bool
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, S.Input == Publishers.AllSatisfy<Upstream>.Output {
-            var didRequest = false
-            self.upstream.subscribe(TransformingSubscriber(
-                subscriber: subscriber,
-                transformRequest: { demand in
-                    guard demand > .none, !didRequest else {
-                        return [.demand(.none)]
-                    }
-                    didRequest = true
-                    return [.demand(.unlimited)]
-                }, transformValue: { value in
-                    if !self.predicate(value) {
-                        return [.value(false), .finished]
-                    }
-                    return [.demand(.unlimited)]
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        return [.value(true), .finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
-                }
-            ))
+            self.upstream.compactMap { !self.predicate($0) ? false : nil }
+                .first()
+                .replaceEmpty(with: true)
+                .subscribe(subscriber)
         }
     }
 
@@ -54,33 +35,10 @@ extension Publishers {
         public let predicate: (Upstream.Output) throws -> Bool
 
         public func receive<S>(subscriber: S) where S: Subscriber, S.Failure == Publishers.TryAllSatisfy<Upstream>.Failure, S.Input == Publishers.TryAllSatisfy<Upstream>.Output {
-            var didRequest = false
-            self.upstream.subscribe(TransformingSubscriber(
-                subscriber: subscriber,
-                transformRequest: { demand in
-                    guard demand > .none, !didRequest else {
-                        return [.demand(.none)]
-                    }
-                    didRequest = true
-                    return [.demand(.unlimited)]
-                }, transformValue: { value in
-                    do {
-                        if try !self.predicate(value) {
-                            return [.value(false), .finished]
-                        }
-                        return [.demand(.unlimited)]
-                    } catch {
-                        return [.failure(error)]
-                    }
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        return [.value(true), .finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
-                }
-            ))
+            self.upstream.tryCompactMap { try !self.predicate($0) ? false : nil }
+                .first()
+                .replaceEmpty(with: true)
+                .subscribe(subscriber)
         }
     }
 }

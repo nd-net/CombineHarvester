@@ -22,7 +22,7 @@ extension Publishers {
                     }
                 }
             )
-            upstream.receive(subscriber: nestedSubscriber)
+            upstream.subscribe(nestedSubscriber)
         }
     }
 
@@ -39,9 +39,9 @@ extension Publishers {
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             return self.upstream
-                .compactMap { self.predicate($0) ? $0 : nil }
+                .filter(self.predicate)
                 .first()
-                .receive(subscriber: subscriber)
+                .subscribe(subscriber)
         }
     }
 
@@ -58,9 +58,9 @@ extension Publishers {
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryFirstWhere<Upstream>.Failure {
             return self.upstream
-                .tryCompactMap { try self.predicate($0) ? $0 : nil }
+                .tryFilter(self.predicate)
                 .first()
-                .receive(subscriber: subscriber)
+                .subscribe(subscriber)
         }
     }
 }
