@@ -11,6 +11,10 @@ import XCTest
 struct TestPublisher<Output, Failure>: Publisher, Equatable where Output: Equatable, Failure: Error & Equatable {
     var content: [Result<Output, Failure>]
 
+    static func success(_ content: [Output]) -> TestPublisher {
+        return TestPublisher(content.map(Result.success))
+    }
+
     init(_ content: Result<Output, Failure>...) {
         self.content = content
     }
