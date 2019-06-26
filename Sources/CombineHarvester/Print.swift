@@ -31,32 +31,6 @@ extension Publishers {
             self.stream = stream
         }
 
-        private class PrintingSubscription: Subscription {
-            private let upstream: Subscription
-            private let didRequest: (Subscribers.Demand) -> Void
-            private let didCancel: () -> Void
-
-            init(upstream: Subscription, didRequest: @escaping (Subscribers.Demand) -> Void, didCancel: @escaping () -> Void) {
-                self.upstream = upstream
-                self.didRequest = didRequest
-                self.didCancel = didCancel
-            }
-
-            func request(_ demand: Subscribers.Demand) {
-                self.didRequest(demand)
-                self.upstream.request(demand)
-            }
-
-            func cancel() {
-                self.didCancel()
-                self.upstream.cancel()
-            }
-
-            var combineIdentifier: CombineIdentifier {
-                return self.upstream.combineIdentifier
-            }
-        }
-
         private func print(_ items: Any...) {
             guard var stream = self.stream else {
                 return
@@ -94,25 +68,13 @@ extension Publishers {
                 self.upstream.subscribe(subscriber)
                 return
             }
-
-            let printingSubscriber = AnySubscriber<S.Input, S.Failure>(
-                receiveSubscription: { subscription in
-                    self.print(subscription: subscription)
-                    let nestedSubscription = PrintingSubscription(
-                        upstream: subscription,
-                        didRequest: { _ in },
-                        didCancel: self.printCancellation
-                    )
-                    subscriber.receive(subscription: nestedSubscription)
-                }, receiveValue: { value in
-                    self.print(value: value)
-                    return subscriber.receive(value)
-                }, receiveCompletion: { completion in
-                    self.print(completion: completion)
-                    subscriber.receive(completion: completion)
-                }
-            )
-            upstream.subscribe(printingSubscriber)
+            self.upstream
+                .handleEvents(receiveSubscription: self.print(subscription:),
+                              receiveOutput: self.print(value:),
+                              receiveCompletion: self.print(completion:),
+                              receiveCancel: self.printCancellation,
+                              receiveRequest: nil)
+                .subscribe(subscriber)
         }
     }
 }
