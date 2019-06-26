@@ -46,10 +46,11 @@ class AllSatisfyTests: XCTestCase {
             publisher = TestPublisher.success(sequence)
             receiver = TestSubject()
             _ = publisher
-                .tryAllSatisfy { if $0 == "dolor" {
-                    throw TestError.otherError
-                }
-                return true
+                .tryAllSatisfy {
+                    if $0 == "dolor" {
+                        throw TestError.otherError
+                    }
+                    return true
                 }
                 .mapError { $0 as! TestError }
                 .subscribe(receiver)
@@ -60,10 +61,11 @@ class AllSatisfyTests: XCTestCase {
             publisher = TestPublisher(sequence.map(Result.success) + [.failure(.error)])
             receiver = TestSubject()
             _ = publisher
-                .tryAllSatisfy { if $0 == "dolor" {
-                    throw TestError.otherError
-                }
-                return true
+                .tryAllSatisfy {
+                    if $0 == "dolor" {
+                        throw TestError.otherError
+                    }
+                    return true
                 }
                 .mapError { $0 as! TestError }
                 .subscribe(receiver)
