@@ -20,30 +20,8 @@ extension Publishers {
                 self.upstream.subscribe(subscriber)
                 return
             }
-            var remaining = self.count
-            self.upstream.subscribe(TransformingSubscriber(
-                subscriber: subscriber,
-                transformRequest: { demand in
-                    if demand < remaining + 1 {
-                        return [.demand(.max(remaining + 1))]
-                    } else {
-                        return [.demand(demand)]
-                    }
-                }, transformValue: { value in
-                    guard remaining > 0 else {
-                        return [.value(value)]
-                    }
-                    remaining -= 1
-                    return [.demand(.max(remaining + 1))]
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        return [.finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
-                }
-            ))
+            self.upstream.output(in: self.count...)
+                .subscribe(subscriber)
         }
     }
 }
@@ -63,12 +41,12 @@ extension Publishers {
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             var finished = false
 
-            upstream.filter {
+            upstream.compactMap { value in
                 if finished {
-                    return true
+                    return value
                 }
-                finished = !self.predicate($0)
-                return finished
+                finished = !self.predicate(value)
+                return finished ? value : nil
             }.subscribe(subscriber)
         }
     }
@@ -87,12 +65,12 @@ extension Publishers {
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryDropWhile<Upstream>.Failure {
             var finished = false
 
-            upstream.tryFilter {
+            upstream.tryCompactMap { value in
                 if finished {
-                    return true
+                    return value
                 }
-                finished = try !self.predicate($0)
-                return finished
+                finished = try !self.predicate(value)
+                return finished ? value : nil
             }.subscribe(subscriber)
         }
     }

@@ -9,20 +9,8 @@ extension Publishers {
         public let upstream: Upstream
 
         public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
-            let nestedSubscriber = TransformingSubscriber<Output, Failure, Output, Failure>(
-                subscriber: subscriber,
-                transformRequest: { [.demand($0)] },
-                transformValue: { [.value($0), .finished] },
-                transformCompletion: {
-                    switch $0 {
-                    case .finished:
-                        return [.finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
-                }
-            )
-            upstream.subscribe(nestedSubscriber)
+            self.upstream.prefix(1)
+                .subscribe(subscriber)
         }
     }
 
