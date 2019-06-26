@@ -2,19 +2,20 @@
 extension Publishers {
     /// A publisher that eventually produces one value and then finishes or fails.
     public final class Future<Output, Failure>: Publisher where Failure: Error {
-        private typealias AttemptToFulfill = (@escaping (Result<Output, Failure>) -> Void) -> Void
+        public typealias Promise = (Result<Output, Failure>) -> Void
+        private typealias PromiseHandler = (@escaping Promise) -> Void
 
-        private let attemptToFulfill: AttemptToFulfill
+        private let attemptToFulfill: PromiseHandler
 
-        public init(_ attemptToFulfill: @escaping (@escaping (Result<Output, Failure>) -> Void) -> Void) {
+        public init(_ attemptToFulfill: @escaping (@escaping Promise) -> Void) {
             self.attemptToFulfill = attemptToFulfill
         }
 
         private class FutureSubscription: Subscription {
-            private let attemptToFulfill: AttemptToFulfill
+            private let attemptToFulfill: PromiseHandler
             var subscriber: Atomic<AnySubscriber<Output, Failure>?>
 
-            init<S>(attemptToFulfill: @escaping AttemptToFulfill, subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+            init<S>(attemptToFulfill: @escaping PromiseHandler, subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
                 self.attemptToFulfill = attemptToFulfill
                 self.subscriber = Atomic(value: subscriber.eraseToAnySubscriber())
             }
