@@ -16,7 +16,7 @@ extension Publishers {
             self.upstream = upstream
         }
 
-        public func receive<S>(subscriber: S) where Failure == S.Failure, S: Subscriber, Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             self.upstream
                 .mapError { never in never as! Failure }
                 .subscribe(subscriber)

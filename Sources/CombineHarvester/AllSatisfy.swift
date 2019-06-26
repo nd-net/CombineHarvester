@@ -1,7 +1,7 @@
 
 extension Publishers {
     /// A publisher that publishes a single Boolean value that indicates whether all received elements pass a given predicate.
-    public struct AllSatisfy<Upstream>: Publisher where Upstream: Publisher {
+    public struct AllSatisfy<Upstream: Publisher>: Publisher {
         public typealias Output = Bool
         public typealias Failure = Upstream.Failure
 
@@ -13,7 +13,7 @@ extension Publishers {
         ///  Return `true` to continue, or `false` to cancel the upstream and finish.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, S.Input == Publishers.AllSatisfy<Upstream>.Output {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, S.Input == Publishers.AllSatisfy<Upstream>.Output {
             self.upstream.compactMap { !self.predicate($0) ? false : nil }
                 .first()
                 .replaceEmpty(with: true)
@@ -22,7 +22,7 @@ extension Publishers {
     }
 
     /// A publisher that publishes a single Boolean value that indicates whether all received elements pass a given error-throwing predicate.
-    public struct TryAllSatisfy<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryAllSatisfy<Upstream: Publisher>: Publisher {
         public typealias Output = Bool
         public typealias Failure = Error
 
@@ -34,7 +34,7 @@ extension Publishers {
         /// Return `true` to continue, or `false` to cancel the upstream and complete. The closure may throw, in which case the publisher cancels the upstream publisher and fails with the thrown error.
         public let predicate: (Upstream.Output) throws -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, S.Failure == Publishers.TryAllSatisfy<Upstream>.Failure, S.Input == Publishers.TryAllSatisfy<Upstream>.Output {
+        public func receive<S: Subscriber>(subscriber: S) where S.Failure == Publishers.TryAllSatisfy<Upstream>.Failure, S.Input == Publishers.TryAllSatisfy<Upstream>.Output {
             self.upstream.tryCompactMap { try !self.predicate($0) ? false : nil }
                 .first()
                 .replaceEmpty(with: true)

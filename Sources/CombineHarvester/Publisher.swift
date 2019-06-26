@@ -27,7 +27,7 @@ public protocol Publisher {
     /// - Parameters:
     ///     - subscriber: The subscriber to attach to this `Publisher`.
     ///                   once attached it can begin to receive values.
-    func receive<S>(subscriber: S) where S: Subscriber, Self.Failure == S.Failure, Self.Output == S.Input
+    func receive<S: Subscriber>(subscriber: S) where Self.Failure == S.Failure, Self.Output == S.Input
 }
 
 /// A namespace for types related to the Publisher protocol.
@@ -45,7 +45,7 @@ extension Publisher {
     /// - SeeAlso: `receive(subscriber:)`
     /// - Parameters:
     ///     - subscriber: The subscriber to attach to this `Publisher`. After attaching, the subscriber can start to receive values.
-    public func subscribe<S>(_ subscriber: S) where S: Subscriber, Self.Failure == S.Failure, Self.Output == S.Input {
+    public func subscribe<S: Subscriber>(_ subscriber: S) where Self.Failure == S.Failure, Self.Output == S.Input {
         self.receive(subscriber: subscriber)
     }
 }

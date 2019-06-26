@@ -23,7 +23,7 @@ struct TestPublisher<Output, Failure>: Publisher, Equatable where Output: Equata
         self.content = content
     }
 
-    func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
+    func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
         let subscription = IteratingSubscription(iterator: content.makeIterator(), subscriber: subscriber)
         subscriber.receive(subscription: subscription)
     }

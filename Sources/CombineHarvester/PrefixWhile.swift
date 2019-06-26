@@ -1,7 +1,7 @@
 
 extension Publishers {
     /// A publisher that republishes elements while a predicate closure indicates publishing should continue.
-    public struct PrefixWhile<Upstream>: Publisher where Upstream: Publisher {
+    public struct PrefixWhile<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -11,7 +11,7 @@ extension Publishers {
         /// The closure that determines whether whether publishing should continue.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             self.upstream.subscribe(TransformingSubscriber(
                 subscriber: subscriber,
                 transformRequest: { [.demand($0)] },
@@ -34,7 +34,7 @@ extension Publishers {
     }
 
     /// A publisher that republishes elements while an error-throwing predicate closure indicates publishing should continue.
-    public struct TryPrefixWhile<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryPrefixWhile<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Error
 
@@ -50,7 +50,7 @@ extension Publishers {
         /// - Parameters:
         ///     - subscriber: The subscriber to attach to this `Publisher`.
         ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryPrefixWhile<Upstream>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryPrefixWhile<Upstream>.Failure {
             self.upstream.subscribe(TransformingSubscriber(
                 subscriber: subscriber,
                 transformRequest: { [.demand($0)] },

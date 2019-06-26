@@ -22,7 +22,7 @@ public struct AnyPublisher<Output, Failure> where Failure: Error {
 }
 
 extension AnyPublisher: Publisher {
-    public func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+    public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
         self.didSubscribe(subscriber.eraseToAnySubscriber())
     }
 }

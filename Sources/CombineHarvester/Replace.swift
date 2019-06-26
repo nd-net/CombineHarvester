@@ -1,7 +1,7 @@
 
 extension Publishers {
     /// A publisher that replaces an empty stream with a provided element.
-    public struct ReplaceEmpty<Upstream>: Publisher where Upstream: Publisher {
+    public struct ReplaceEmpty<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -16,7 +16,7 @@ extension Publishers {
             self.output = output
         }
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             var isEmpty = true
             self.upstream.subscribe(TransformingSubscriber(
                 subscriber: subscriber,
@@ -40,7 +40,7 @@ extension Publishers {
     }
 
     /// A publisher that replaces any errors in the stream with a provided element.
-    public struct ReplaceError<Upstream>: Publisher where Upstream: Publisher {
+    public struct ReplaceError<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Never
 
@@ -61,7 +61,7 @@ extension Publishers {
         /// - Parameters:
         ///     - subscriber: The subscriber to attach to this `Publisher`.
         ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Failure {
             self.upstream.subscribe(TransformingSubscriber<Output, Upstream.Failure, Output, Never>(
                 subscriber: subscriber,
                 transformRequest: { [.demand($0)] },

@@ -8,7 +8,7 @@ extension Publishers {
         public let initialResult: Output
         public let nextPartialResult: (Output, Upstream.Output) -> Output
 
-        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, Upstream.Failure == S.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
             var currentValue = self.initialResult
             self.upstream.map { value in
                 currentValue = self.nextPartialResult(currentValue, value)
@@ -26,7 +26,7 @@ extension Publishers {
 
         public let nextPartialResult: (Output, Upstream.Output) throws -> Output
 
-        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, S.Failure == Publishers.TryScan<Upstream, Output>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             var currentValue = self.initialResult
             self.upstream.tryMap { value in
                 currentValue = try self.nextPartialResult(currentValue, value)

@@ -1,6 +1,6 @@
 extension Publishers {
     /// A publisher that omits a specified number of elements before republishing later elements.
-    public struct Drop<Upstream>: Publisher where Upstream: Publisher {
+    public struct Drop<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -15,7 +15,7 @@ extension Publishers {
             self.count = count
         }
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             guard self.count > 0 else {
                 self.upstream.subscribe(subscriber)
                 return
@@ -31,7 +31,7 @@ extension Publishers.Drop: Equatable where Upstream: Equatable {
 
 extension Publishers {
     /// A publisher that omits elements from an upstream publisher until a given closure returns false.
-    public struct DropWhile<Upstream>: Publisher where Upstream: Publisher {
+    public struct DropWhile<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -41,7 +41,7 @@ extension Publishers {
         /// The closure that indicates whether to drop the element.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             var finished = false
 
             upstream.compactMap { value in
@@ -55,7 +55,7 @@ extension Publishers {
     }
 
     /// A publisher that omits elements from an upstream publisher until a given error-throwing closure returns false.
-    public struct TryDropWhile<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryDropWhile<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Error
 
@@ -65,7 +65,7 @@ extension Publishers {
         /// The error-throwing closure that indicates whether to drop the element.
         public let predicate: (Upstream.Output) throws -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryDropWhile<Upstream>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryDropWhile<Upstream>.Failure {
             var finished = false
 
             upstream.tryCompactMap { value in

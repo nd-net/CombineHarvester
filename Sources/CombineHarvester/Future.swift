@@ -15,7 +15,7 @@ extension Publishers {
             private let attemptToFulfill: PromiseHandler
             var subscriber: Atomic<AnySubscriber<Output, Failure>?>
 
-            init<S>(attemptToFulfill: @escaping PromiseHandler, subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+            init<S: Subscriber>(attemptToFulfill: @escaping PromiseHandler, subscriber: S) where Output == S.Input, Failure == S.Failure {
                 self.attemptToFulfill = attemptToFulfill
                 self.subscriber = Atomic(value: subscriber.eraseToAnySubscriber())
             }
@@ -43,7 +43,7 @@ extension Publishers {
             }
         }
 
-        public final func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+        public final func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
             subscriber.receive(subscription: FutureSubscription(attemptToFulfill: self.attemptToFulfill, subscriber: subscriber))
         }
     }

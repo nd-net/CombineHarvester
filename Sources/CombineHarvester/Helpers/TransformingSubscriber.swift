@@ -30,10 +30,10 @@ class TransformingSubscriber<Input, InputFailure: Error, Output, OutputFailure: 
         }
     }
 
-    init<S>(subscriber: S,
-            transformRequest: @escaping (Subscribers.Demand) -> [TransformationResult],
-            transformValue: @escaping (Input) -> [TransformationResult],
-            transformCompletion: @escaping (Subscribers.Completion<InputFailure>) -> [TransformationResult]) where S: Subscriber, OutputFailure == S.Failure, S.Input == Output {
+    init<S: Subscriber>(subscriber: S,
+                        transformRequest: @escaping (Subscribers.Demand) -> [TransformationResult],
+                        transformValue: @escaping (Input) -> [TransformationResult],
+                        transformCompletion: @escaping (Subscribers.Completion<InputFailure>) -> [TransformationResult]) where OutputFailure == S.Failure, S.Input == Output {
         self.subscriber = subscriber.eraseToAnySubscriber()
         self.transformRequest = transformRequest
         self.transformCompletion = transformCompletion

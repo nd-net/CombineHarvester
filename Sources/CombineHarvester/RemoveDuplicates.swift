@@ -1,6 +1,6 @@
 
 extension Publishers {
-    public struct RemoveDuplicates<Upstream>: Publisher where Upstream: Publisher {
+    public struct RemoveDuplicates<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -8,7 +8,7 @@ extension Publishers {
 
         public let predicate: (Upstream.Output, Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             var previous: Output?
             upstream.compactMap { value -> Output? in
                 guard let prev = previous else {
@@ -25,7 +25,7 @@ extension Publishers {
         }
     }
 
-    public struct TryRemoveDuplicates<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryRemoveDuplicates<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Error
 
@@ -33,7 +33,7 @@ extension Publishers {
 
         public let predicate: (Upstream.Output, Upstream.Output) throws -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryRemoveDuplicates<Upstream>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryRemoveDuplicates<Upstream>.Failure {
             var previous: Output?
             upstream.tryCompactMap { value -> Output? in
                 guard let prev = previous else {

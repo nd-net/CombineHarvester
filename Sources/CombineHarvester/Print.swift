@@ -8,7 +8,7 @@ extension Publishers {
     /// * normal completion
     /// * failure
     /// * cancellation
-    public struct Print<Upstream>: Publisher where Upstream: Publisher {
+    public struct Print<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -63,7 +63,7 @@ extension Publishers {
             self.print("cancel()")
         }
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             guard self.stream != nil else {
                 self.upstream.subscribe(subscriber)
                 return

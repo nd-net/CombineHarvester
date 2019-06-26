@@ -25,7 +25,7 @@ extension Publishers {
             self.result = Result.failure(failure)
         }
 
-        public func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
             let sequence: [Result<Output, Failure>]
             switch self.result {
             case let .success(value):
@@ -235,7 +235,7 @@ extension Publishers.Optional {
     }
 
     // swiftformat:disable:next typeSugar
-    public func output<R>(in range: R) -> Publishers.Optional<Output, Failure> where R: RangeExpression, R.Bound == Int {
+    public func output<R: RangeExpression>(in range: R) -> Publishers.Optional<Output, Failure> where R.Bound == Int {
         return range.contains(0) ? self : self.dropFirst()
     }
 

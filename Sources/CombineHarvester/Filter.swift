@@ -1,7 +1,7 @@
 
 extension Publishers {
     /// A publisher that republishes all elements that match a provided closure.
-    public struct Filter<Upstream>: Publisher where Upstream: Publisher {
+    public struct Filter<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -11,14 +11,14 @@ extension Publishers {
         /// A closure that indicates whether to republish an element.
         public let isIncluded: (Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             self.upstream.compactMap { self.isIncluded($0) ? $0 : nil }
                 .subscribe(subscriber)
         }
     }
 
     /// A publisher that republishes all elements that match a provided error-throwing closure.
-    public struct TryFilter<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryFilter<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Error
 
@@ -28,7 +28,7 @@ extension Publishers {
         /// A error-throwing closure that indicates whether to republish an element.
         public let isIncluded: (Upstream.Output) throws -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryFilter<Upstream>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryFilter<Upstream>.Failure {
             self.upstream.tryCompactMap { try self.isIncluded($0) ? $0 : nil }
                 .subscribe(subscriber)
         }

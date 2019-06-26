@@ -3,7 +3,7 @@ extension Publishers {
     /// A publisher that raises a fatal error upon receiving any failure, and otherwise republishes all received input.
     ///
     /// Use this function for internal sanity checks that are active during testing but do not impact performance of shipping code.
-    public struct AssertNoFailure<Upstream>: Publisher where Upstream: Publisher {
+    public struct AssertNoFailure<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Never
 
@@ -19,7 +19,7 @@ extension Publishers {
         /// The line number used in the error message.
         public let line: UInt
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Output == S.Input, S.Failure == Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             self.upstream.mapError { error in
                 fatalError("\(self.prefix) Received .failure(\(error))", file: self.file, line: self.line)
             }.subscribe(subscriber)

@@ -1,7 +1,7 @@
 
 extension Publishers {
     /// A publisher that republishes items from another publisher only if each new item is in increasing order from the previously-published item.
-    public struct Comparison<Upstream>: Publisher where Upstream: Publisher {
+    public struct Comparison<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -11,7 +11,7 @@ extension Publishers {
         /// A closure that receives two elements and returns `true` if they are in increasing order.
         public let areInIncreasingOrder: (Upstream.Output, Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             self.upstream.reduce(nil as Output?) { prev, cur in
                 guard let prev = prev else {
                     return cur
@@ -28,7 +28,7 @@ extension Publishers {
     }
 
     /// A publisher that republishes items from another publisher only if each new item is in increasing order from the previously-published item, and fails if the ordering logic throws an error.
-    public struct TryComparison<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryComparison<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Error
 
@@ -38,7 +38,7 @@ extension Publishers {
         /// A closure that receives two elements and returns `true` if they are in increasing order.
         public let areInIncreasingOrder: (Upstream.Output, Upstream.Output) throws -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryComparison<Upstream>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryComparison<Upstream>.Failure {
             self.upstream.tryReduce(nil as Output?) { prev, cur in
                 guard let prev = prev else {
                     return cur

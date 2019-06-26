@@ -10,7 +10,7 @@ extension Publishers {
         /// The closure that transforms elements from the upstream publisher.
         public let transform: (Upstream.Output) -> Output
 
-        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, Upstream.Failure == S.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Upstream.Failure == S.Failure {
             Publishers.CompactMap(upstream: self.upstream, transform: self.transform)
                 .receive(subscriber: subscriber)
         }
@@ -26,7 +26,7 @@ extension Publishers {
         /// The error-throwing closure that transforms elements from the upstream publisher.
         public let transform: (Upstream.Output) throws -> Output
 
-        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, S.Failure == Publishers.TryMap<Upstream, Output>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Publishers.TryMap<Upstream, Output>.Failure {
             Publishers.TryCompactMap(upstream: self.upstream, transform: self.transform)
                 .receive(subscriber: subscriber)
         }

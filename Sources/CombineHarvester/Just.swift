@@ -18,7 +18,7 @@ extension Publishers {
             self.output = output
         }
 
-        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, S.Failure == Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             let sequence: [Result<Output, Failure>] = [
                 .success(output),
             ]
@@ -101,7 +101,7 @@ extension Publishers.Just {
         return Publishers.Sequence(sequence: elements + [output])
     }
 
-    public func prepend<S>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element, S: Swift.Sequence {
+    public func prepend<S: Swift.Sequence>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element {
         return Publishers.Sequence(sequence: elements + [output])
     }
 
@@ -109,7 +109,7 @@ extension Publishers.Just {
         return Publishers.Sequence(sequence: [output] + elements)
     }
 
-    public func append<S>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element, S: Swift.Sequence {
+    public func append<S: Swift.Sequence>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element {
         return Publishers.Sequence(sequence: [output] + elements)
     }
 
@@ -212,7 +212,7 @@ extension Publishers.Just {
     }
 
     // swiftformat:disable:next typeSugar
-    public func output<R>(in range: R) -> Publishers.Optional<Output, Failure> where R: RangeExpression, R.Bound == Int {
+    public func output<R: RangeExpression>(in range: R) -> Publishers.Optional<Output, Failure> where R.Bound == Int {
         // swiftformat:disable:next typeSugar
         return Publishers.Optional(range.contains(0) ? self.output : nil)
     }

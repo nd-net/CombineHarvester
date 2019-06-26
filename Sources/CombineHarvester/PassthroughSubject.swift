@@ -14,7 +14,7 @@ public final class PassthroughSubject<Output, Failure>: Subject where Failure: E
         var subscriber: Atomic<AnySubscriber<Output, Failure>?>
         var demand = Subscribers.Demand.none
 
-        init<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+        init<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
             self.subscriber = Atomic(value: subscriber.eraseToAnySubscriber())
         }
 
@@ -46,7 +46,7 @@ public final class PassthroughSubject<Output, Failure>: Subject where Failure: E
         }
     }
 
-    public final func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+    public final func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
         let subscription = PassthroughSubscription(subscriber: subscriber)
         self.subscription = subscription
         subscription.sendSubscription()

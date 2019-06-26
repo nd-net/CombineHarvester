@@ -3,7 +3,7 @@ public final class AnySubject<Output, Failure>: Subject where Failure: Error {
     private let didReceiveValue: (Output) -> Void
     private let didReceiveCompletion: (Subscribers.Completion<Failure>) -> Void
 
-    public init<S>(_ subject: S) where Output == S.Output, Failure == S.Failure, S: Subject {
+    public init<S: Subject>(_ subject: S) where Output == S.Output, Failure == S.Failure {
         self.didSubscribe = subject.subscribe
         self.didReceiveValue = subject.send
         self.didReceiveCompletion = subject.send(completion:)
@@ -15,7 +15,7 @@ public final class AnySubject<Output, Failure>: Subject where Failure: Error {
         self.didReceiveCompletion = receiveCompletion
     }
 
-    public final func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+    public final func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
         self.didSubscribe(subscriber.eraseToAnySubscriber())
     }
 

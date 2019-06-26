@@ -1,7 +1,7 @@
 
 extension Publishers {
     /// A publisher that publishes elements specified by a range in the sequence of published elements.
-    public struct Output<Upstream>: Publisher where Upstream: Publisher {
+    public struct Output<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -21,7 +21,7 @@ extension Publishers {
             self.range = range
         }
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             var didSendRequest = false
             var index = 0
             let nestedSubscriber = TransformingSubscriber<Output, Failure, Output, Failure>(
@@ -81,7 +81,7 @@ extension Publisher {
     /// If the publisher completes normally or with an error before producing all the elements in the range, it doesn’t publish the remaining elements.
     /// - Parameter range: A range that indicates which elements to publish.
     /// - Returns: A publisher that publishes elements specified by a range.
-    public func output<R>(in range: R) -> Publishers.Output<Self> where R: RangeExpression, R.Bound == Int {
+    public func output<R: RangeExpression>(in range: R) -> Publishers.Output<Self> where R.Bound == Int {
         return Publishers.Output(upstream: self, range: CountableRange(uncheckedRange: range))
     }
 }

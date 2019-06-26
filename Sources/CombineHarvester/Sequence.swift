@@ -15,7 +15,7 @@ extension Publishers {
             self.sequence = sequence
         }
 
-        public func receive<S>(subscriber: S) where Failure == S.Failure, S: Subscriber, Elements.Element == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Elements.Element == S.Input {
             let sequence = self.sequence
                 .lazy
                 .map { Result<Output, Failure>.success($0) }
@@ -299,7 +299,7 @@ extension Publishers.Sequence where Elements: RangeReplaceableCollection {
         return Publishers.Sequence(sequence: elements + sequence)
     }
 
-    public func prepend<S>(_ elements: S) -> Publishers.Sequence<Elements, Failure> where S: Swift.Sequence, Elements.Element == S.Element {
+    public func prepend<S: Swift.Sequence>(_ elements: S) -> Publishers.Sequence<Elements, Failure> where Elements.Element == S.Element {
         return Publishers.Sequence(sequence: elements + sequence)
     }
 
@@ -311,7 +311,7 @@ extension Publishers.Sequence where Elements: RangeReplaceableCollection {
         return Publishers.Sequence(sequence: sequence + elements)
     }
 
-    public func append<S>(_ elements: S) -> Publishers.Sequence<Elements, Failure> where S: Sequence, Elements.Element == S.Element {
+    public func append<S: Swift.Sequence>(_ elements: S) -> Publishers.Sequence<Elements, Failure> where Elements.Element == S.Element {
         return Publishers.Sequence(sequence: sequence + elements)
     }
 

@@ -32,7 +32,7 @@ extension Publishers {
             self.result = .failure(failure)
         }
 
-        public func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
             let sequence: [Result<Output, Failure>] = [
                 result,
             ]
@@ -228,7 +228,7 @@ extension Publishers.Once {
     }
 
     // swiftformat:disable:next typeSugar
-    public func output<R>(in range: R) -> Publishers.Optional<Output, Failure> where R: RangeExpression, R.Bound == Int {
+    public func output<R: RangeExpression>(in range: R) -> Publishers.Optional<Output, Failure> where R.Bound == Int {
         return self.filter { _ in range.contains(0) }
     }
 

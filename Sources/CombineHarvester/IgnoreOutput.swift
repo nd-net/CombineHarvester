@@ -1,14 +1,14 @@
 
 extension Publishers {
     /// A publisher that ignores all upstream elements, but passes along a completion state (finish or failed).
-    public struct IgnoreOutput<Upstream>: Publisher where Upstream: Publisher {
+    public struct IgnoreOutput<Upstream: Publisher>: Publisher {
         public typealias Output = Never
         public typealias Failure = Upstream.Failure
 
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, S.Input == Output {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, S.Input == Output {
             self.upstream
                 .compactMap { _ in nil }
                 .last()

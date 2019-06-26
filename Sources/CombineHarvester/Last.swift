@@ -1,12 +1,12 @@
 extension Publishers {
     /// A publisher that only publishes the last element of a stream, after the stream finishes.
-    public struct Last<Upstream>: Publisher where Upstream: Publisher {
+    public struct Last<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             var didRequest = false
             var previousValue: Output?
             self.upstream.subscribe(TransformingSubscriber(
@@ -39,7 +39,7 @@ extension Publishers {
 
 extension Publishers {
     /// A publisher that only publishes the last element of a stream that satisfies a predicate closure, once the stream finishes.
-    public struct LastWhere<Upstream>: Publisher where Upstream: Publisher {
+    public struct LastWhere<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
         public let upstream: Upstream
@@ -47,7 +47,7 @@ extension Publishers {
         /// The closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             return self.upstream
                 .filter(self.predicate)
                 .last()
@@ -56,7 +56,7 @@ extension Publishers {
     }
 
     /// A publisher that only publishes the last element of a stream that satisfies a error-throwing predicate closure, once the stream finishes.
-    public struct TryLastWhere<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryLastWhere<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Error
 
@@ -66,7 +66,7 @@ extension Publishers {
         /// The error-throwing closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) throws -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryLastWhere<Upstream>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryLastWhere<Upstream>.Failure {
             return self.upstream
                 .tryFilter(self.predicate)
                 .last()

@@ -50,7 +50,7 @@ class TestSubject<Output, Failure: Error>: Subject {
         self.completion.append(completion)
     }
 
-    func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
+    func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
         self.subscriber = subscriber.eraseToAnySubscriber()
         let subscription = TestSubscription(subject: self)
         subscriber.receive(subscription: subscription)

@@ -22,7 +22,7 @@ extension Publishers {
         /// The failure to send when terminating the publisher.
         public let error: Failure
 
-        public func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S: Subscriber {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
             subscriber.receive(subscription: Subscriptions.empty)
             subscriber.receive(completion: .failure(self.error))
         }

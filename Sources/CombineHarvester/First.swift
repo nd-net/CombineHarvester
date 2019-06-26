@@ -1,21 +1,21 @@
 
 extension Publishers {
     /// A publisher that publishes the first element of a stream, then finishes.
-    public struct First<Upstream>: Publisher where Upstream: Publisher {
+    public struct First<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             self.upstream.prefix(1)
                 .subscribe(subscriber)
         }
     }
 
     /// A publisher that only publishes the first element of a stream to satisfy a predicate closure.
-    public struct FirstWhere<Upstream>: Publisher where Upstream: Publisher {
+    public struct FirstWhere<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -25,7 +25,7 @@ extension Publishers {
         /// The closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             return self.upstream
                 .filter(self.predicate)
                 .first()
@@ -34,7 +34,7 @@ extension Publishers {
     }
 
     /// A publisher that only publishes the first element of a stream to satisfy a throwing predicate closure.
-    public struct TryFirstWhere<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryFirstWhere<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Error
 
@@ -44,7 +44,7 @@ extension Publishers {
         /// The error-throwing closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) throws -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Output == S.Input, S.Failure == Publishers.TryFirstWhere<Upstream>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryFirstWhere<Upstream>.Failure {
             return self.upstream
                 .tryFilter(self.predicate)
                 .first()

@@ -10,7 +10,7 @@ extension Publishers {
             self.upstream = upstream
         }
 
-        public final func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public final func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             self.upstream.subscribe(subscriber)
         }
 

@@ -1,7 +1,7 @@
 
 extension Publishers {
     /// A publisher that emits a Boolean value when a specified element is received from its upstream publisher.
-    public struct Contains<Upstream>: Publisher where Upstream: Publisher, Upstream.Output: Equatable {
+    public struct Contains<Upstream: Publisher>: Publisher where Upstream.Output: Equatable {
         public typealias Output = Bool
         public typealias Failure = Upstream.Failure
 
@@ -11,7 +11,7 @@ extension Publishers {
         /// The element to scan for in the upstream publisher.
         public let output: Upstream.Output
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, S.Input == Output {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, S.Input == Output {
             self.upstream.contains(where: { $0 == self.output }).subscribe(subscriber)
         }
     }
@@ -22,7 +22,7 @@ extension Publishers.Contains: Equatable where Upstream: Equatable {
 
 extension Publishers {
     /// A publisher that emits a Boolean value upon receiving an element that satisfies the predicate closure.
-    public struct ContainsWhere<Upstream>: Publisher where Upstream: Publisher {
+    public struct ContainsWhere<Upstream: Publisher>: Publisher {
         public typealias Output = Bool
         public typealias Failure = Upstream.Failure
 
@@ -32,7 +32,7 @@ extension Publishers {
         /// The closure that determines whether the publisher should consider an element as a match.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, S.Input == Output {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, S.Input == Output {
             self.upstream.compactMap { self.predicate($0) ? true : nil }
                 .first()
                 .replaceEmpty(with: false)
@@ -41,7 +41,7 @@ extension Publishers {
     }
 
     /// A publisher that emits a Boolean value upon receiving an element that satisfies the throwing predicate closure.
-    public struct TryContainsWhere<Upstream>: Publisher where Upstream: Publisher {
+    public struct TryContainsWhere<Upstream: Publisher>: Publisher {
         /// The kind of values published by this publisher.
         public typealias Output = Bool
         public typealias Failure = Error
@@ -52,7 +52,7 @@ extension Publishers {
         /// The error-throwing closure that determines whether this publisher should emit a `true` element.
         public let predicate: (Upstream.Output) throws -> Bool
 
-        public func receive<S>(subscriber: S) where S: Subscriber, S.Failure == Failure, S.Input == Output {
+        public func receive<S: Subscriber>(subscriber: S) where S.Failure == Failure, S.Input == Output {
             self.upstream.tryCompactMap { try self.predicate($0) ? true : nil }
                 .first()
                 .replaceEmpty(with: false)

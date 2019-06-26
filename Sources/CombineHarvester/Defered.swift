@@ -18,7 +18,7 @@ extension Publishers {
             self.createPublisher = createPublisher
         }
 
-        public func receive<S>(subscriber: S) where S: Subscriber, DeferredPublisher.Failure == S.Failure, DeferredPublisher.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where DeferredPublisher.Failure == S.Failure, DeferredPublisher.Output == S.Input {
             self.createPublisher().subscribe(subscriber)
         }
     }

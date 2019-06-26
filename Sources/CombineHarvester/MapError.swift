@@ -15,7 +15,7 @@ extension Publishers {
             self.transform = map
         }
 
-        public func receive<S>(subscriber: S) where Failure == S.Failure, S: Subscriber, Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             let nestedSubscriber = AnySubscriber<Upstream.Output, Upstream.Failure>(
                 receiveSubscription: subscriber.receive(subscription:),
                 receiveValue: subscriber.receive,

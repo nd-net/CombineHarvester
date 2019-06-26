@@ -37,14 +37,14 @@ public struct AnySubscriber<Input, Failure>: Subscriber, CustomStringConvertible
     /// Creates a type-erasing subscriber to wrap an existing subscriber.
     ///
     /// - Parameter s: The subscriber to type-erase.
-    public init<S>(_ s: S) where Input == S.Input, Failure == S.Failure, S: Subscriber {
+    public init<S: Subscriber>(_ s: S) where Input == S.Input, Failure == S.Failure {
         self.init(receiveSubscription: s.receive(subscription:),
                   receiveValue: s.receive,
                   receiveCompletion: s.receive(completion:),
                   combineIdentifier: s.combineIdentifier)
     }
 
-    public init<S>(_ s: S) where Input == S.Output, Failure == S.Failure, S: Subject {
+    public init<S: Subject>(_ s: S) where Input == S.Output, Failure == S.Failure {
         self.init(receiveSubscription: AnySubscriber<Input, Failure>.defaultReceive(subscription:),
                   receiveValue: {
                       s.send($0)
@@ -102,7 +102,7 @@ extension Subscriber {
 }
 
 extension Publisher {
-    public func subscribe<S>(_ subject: S) -> AnyCancellable where S: Subject, Self.Failure == S.Failure, Self.Output == S.Output {
+    public func subscribe<S: Subject>(_ subject: S) -> AnyCancellable where Self.Failure == S.Failure, Self.Output == S.Output {
         let subscriber = AnySubscriber(subject)
         self.receive(subscriber: subscriber)
 

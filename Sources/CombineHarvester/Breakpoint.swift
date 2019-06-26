@@ -4,7 +4,7 @@ extension Publishers {
     ///
     /// When any of the provided closures returns `true`, this publisher raises the `SIGTRAP` signal to stop the process in the debugger.
     /// Otherwise, this publisher passes through values and completions as-is.
-    public struct Breakpoint<Upstream>: Publisher where Upstream: Publisher {
+    public struct Breakpoint<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -46,7 +46,7 @@ extension Publishers {
             }
         }
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Failure == S.Failure, Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             guard self.receiveSubscription != nil || self.receiveOutput != nil || self.receiveCompletion != nil else {
                 self.upstream.subscribe(subscriber)
                 return

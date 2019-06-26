@@ -11,7 +11,7 @@ extension Publishers {
         /// A closure that takes the previously-accumulated value and the next element from the upstream publisher to produce a new value.
         public let nextPartialResult: (Output, Upstream.Output) -> Output
 
-        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, Upstream.Failure == S.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Upstream.Failure == S.Failure {
             self.upstream.scan(self.initial, self.nextPartialResult)
                 .last()
                 .subscribe(subscriber)
@@ -33,7 +33,7 @@ extension Publishers {
         /// If this closure throws an error, the publisher fails and passes the error to its subscriber.
         public let nextPartialResult: (Output, Upstream.Output) throws -> Output
 
-        public func receive<S>(subscriber: S) where Output == S.Input, S: Subscriber, S.Failure == Publishers.TryReduce<Upstream, Output>.Failure {
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             self.upstream.tryScan(self.initial, self.nextPartialResult)
                 .last()
                 .subscribe(subscriber)

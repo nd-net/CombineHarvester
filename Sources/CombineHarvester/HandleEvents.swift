@@ -1,7 +1,7 @@
 
 extension Publishers {
     /// A publisher that performs the specified closures when publisher events occur.
-    public struct HandleEvents<Upstream>: Publisher where Upstream: Publisher {
+    public struct HandleEvents<Upstream: Publisher>: Publisher {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
@@ -49,7 +49,7 @@ extension Publishers {
             }
         }
 
-        public func receive<S>(subscriber: S) where S: Subscriber, Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
             guard self.receiveCancel != nil || self.receiveOutput != nil || self.receiveRequest != nil || self.receiveCompletion != nil || self.receiveSubscription != nil else {
                 self.upstream.subscribe(subscriber)
                 return
