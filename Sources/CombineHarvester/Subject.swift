@@ -12,3 +12,10 @@ public protocol Subject: AnyObject, Publisher {
     /// - Parameter completion: A `Completion` instance which indicates whether publishing has finished normally or failed with an error.
     func send(completion: Subscribers.Completion<Self.Failure>)
 }
+
+extension Subject where Output == Void {
+    /// Available when `Output` is `Void`.
+    func send() {
+        self.send(())
+    }
+}
