@@ -32,9 +32,5 @@ extension Publishers {
                 subscriber.receive(completion: .finished)
             }
         }
-
-        public static func == (lhs: Publishers.Empty<Output, Failure>, rhs: Publishers.Empty<Output, Failure>) -> Bool {
-            return lhs.completeImmediately == rhs.completeImmediately
-        }
     }
 }

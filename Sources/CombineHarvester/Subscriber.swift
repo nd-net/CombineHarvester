@@ -43,16 +43,6 @@ extension Subscribers {
 }
 
 extension Subscribers.Completion: Equatable where Failure: Equatable {
-    public static func == (lhs: Subscribers.Completion<Failure>, rhs: Subscribers.Completion<Failure>) -> Bool {
-        switch (lhs, rhs) {
-        case (.finished, .finished):
-            return true
-        case let (.failure(l), .failure(r)):
-            return l == r
-        case (.finished, .failure(_)), (.failure(_), .finished):
-            return false
-        }
-    }
 }
 
 extension Subscribers {

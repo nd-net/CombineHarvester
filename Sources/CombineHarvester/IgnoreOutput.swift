@@ -18,9 +18,6 @@ extension Publishers {
 }
 
 extension Publishers.IgnoreOutput: Equatable where Upstream: Equatable {
-    public static func == (lhs: Publishers.IgnoreOutput<Upstream>, rhs: Publishers.IgnoreOutput<Upstream>) -> Bool {
-        return lhs.upstream == rhs.upstream
-    }
 }
 
 extension Publisher {

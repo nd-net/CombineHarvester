@@ -30,7 +30,4 @@ extension Publishers {
 }
 
 extension Publishers.Fail: Equatable where Failure: Equatable {
-    public static func == (lhs: Publishers.Fail<Output, Failure>, rhs: Publishers.Fail<Output, Failure>) -> Bool {
-        return lhs.error == rhs.error
-    }
 }

@@ -26,6 +26,9 @@ extension Publishers {
     }
 }
 
+extension Publishers.Drop: Equatable where Upstream: Equatable {
+}
+
 extension Publishers {
     /// A publisher that omits elements from an upstream publisher until a given closure returns false.
     public struct DropWhile<Upstream>: Publisher where Upstream: Publisher {
@@ -73,12 +76,6 @@ extension Publishers {
                 return finished ? value : nil
             }.subscribe(subscriber)
         }
-    }
-}
-
-extension Publishers.Drop: Equatable where Upstream: Equatable {
-    public static func == (lhs: Publishers.Drop<Upstream>, rhs: Publishers.Drop<Upstream>) -> Bool {
-        return lhs.count == rhs.count && lhs.upstream == rhs.upstream
     }
 }
 

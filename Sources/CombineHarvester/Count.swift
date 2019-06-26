@@ -17,6 +17,9 @@ extension Publishers {
     }
 }
 
+extension Publishers.Count: Equatable where Upstream: Equatable {
+}
+
 extension Publisher {
     /// Publishes the number of elements received from the upstream publisher.
     ///

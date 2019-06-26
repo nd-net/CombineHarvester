@@ -41,6 +41,12 @@ extension Publishers {
     }
 }
 
+extension Publishers.Encode: Equatable where Upstream: Equatable, Coder: Equatable {
+}
+
+extension Publishers.Decode: Equatable where Upstream: Equatable, Coder: Equatable {
+}
+
 extension Publisher {
     /// Decodes the output from upstream using a specified `TopLevelDecoder`.
     /// For example, use `JSONDecoder`.

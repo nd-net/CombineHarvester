@@ -44,10 +44,6 @@ extension Publishers {
 }
 
 extension Publishers.Optional: Equatable where Output: Equatable, Failure: Equatable {
-    // swiftformat:disable:next typeSugar
-    public static func == (lhs: Publishers.Optional<Output, Failure>, rhs: Publishers.Optional<Output, Failure>) -> Bool {
-        return lhs.result == rhs.result
-    }
 }
 
 extension Publishers.Optional where Output: Equatable {

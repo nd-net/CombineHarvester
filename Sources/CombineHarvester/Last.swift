@@ -76,9 +76,6 @@ extension Publishers {
 }
 
 extension Publishers.Last: Equatable where Upstream: Equatable {
-    public static func == (lhs: Publishers.Last<Upstream>, rhs: Publishers.Last<Upstream>) -> Bool {
-        return lhs.upstream == rhs.upstream
-    }
 }
 
 extension Publisher {

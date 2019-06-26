@@ -17,6 +17,9 @@ extension Publishers {
     }
 }
 
+extension Publishers.Contains: Equatable where Upstream: Equatable {
+}
+
 extension Publishers {
     /// A publisher that emits a Boolean value upon receiving an element that satisfies the predicate closure.
     public struct ContainsWhere<Upstream>: Publisher where Upstream: Publisher {
@@ -55,12 +58,6 @@ extension Publishers {
                 .replaceEmpty(with: false)
                 .subscribe(subscriber)
         }
-    }
-}
-
-extension Publishers.Contains: Equatable where Upstream: Equatable {
-    public static func == (lhs: Publishers.Contains<Upstream>, rhs: Publishers.Contains<Upstream>) -> Bool {
-        return lhs.output == rhs.output && lhs.upstream == rhs.upstream
     }
 }
 

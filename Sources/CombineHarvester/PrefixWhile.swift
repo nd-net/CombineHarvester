@@ -28,7 +28,8 @@ extension Publishers {
                         return [.failure(error)]
                     }
                 }
-            ))
+            )
+            )
         }
     }
 

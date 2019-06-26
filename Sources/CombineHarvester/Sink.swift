@@ -2,7 +2,6 @@ extension Subscribers {
     /// A simple subscriber that requests an unlimited number of values upon subscription.
     public final class Sink<Upstream>: Subscriber, Cancellable /* , CustomStringConvertible, CustomReflectable, CustomPlaygroundDisplayConvertible */ where Upstream: Publisher {
         public typealias Input = Upstream.Output
-
         public typealias Failure = Upstream.Failure
 
         /// The closure to execute on receipt of a value.

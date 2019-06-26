@@ -80,15 +80,9 @@ extension Publishers {
 }
 
 extension Publishers.ReplaceEmpty: Equatable where Upstream: Equatable, Upstream.Output: Equatable {
-    public static func == (lhs: Publishers.ReplaceEmpty<Upstream>, rhs: Publishers.ReplaceEmpty<Upstream>) -> Bool {
-        return lhs.upstream == rhs.upstream && lhs.output == rhs.output
-    }
 }
 
 extension Publishers.ReplaceError: Equatable where Upstream: Equatable, Upstream.Output: Equatable {
-    public static func == (lhs: Publishers.ReplaceError<Upstream>, rhs: Publishers.ReplaceError<Upstream>) -> Bool {
-        return lhs.upstream == rhs.upstream && lhs.output == rhs.output
-    }
 }
 
 extension Publisher {

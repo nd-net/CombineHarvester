@@ -43,9 +43,6 @@ extension Publishers {
 }
 
 extension Publishers.Once: Equatable where Output: Equatable, Failure: Equatable {
-    public static func == (lhs: Publishers.Once<Output, Failure>, rhs: Publishers.Once<Output, Failure>) -> Bool {
-        return lhs.result == rhs.result
-    }
 }
 
 extension Publishers.Once where Output: Equatable {

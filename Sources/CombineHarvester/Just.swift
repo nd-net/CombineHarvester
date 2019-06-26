@@ -29,9 +29,6 @@ extension Publishers {
 }
 
 extension Publishers.Just: Equatable where Output: Equatable {
-    public static func == (lhs: Publishers.Just<Output>, rhs: Publishers.Just<Output>) -> Bool {
-        return lhs.output == rhs.output
-    }
 }
 
 extension Publishers.Just where Output: Comparable {

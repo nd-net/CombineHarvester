@@ -29,9 +29,6 @@ extension Publishers {
 }
 
 extension Publishers.SetFailureType: Equatable where Upstream: Equatable {
-    public static func == (lhs: Publishers.SetFailureType<Upstream, Failure>, rhs: Publishers.SetFailureType<Upstream, Failure>) -> Bool {
-        return lhs.upstream == rhs.upstream
-    }
 }
 
 extension Publisher where Self.Failure == Never {
