@@ -20,13 +20,6 @@ extension Publishers {
                         return [.value(value)]
                     }
                     return [.finished]
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        return [.finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
                 }
             )
             )
@@ -63,15 +56,9 @@ extension Publishers {
                     } catch {
                         return [.failure(error)]
                     }
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        return [.finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
                 }
-            ))
+            )
+            )
         }
     }
 }

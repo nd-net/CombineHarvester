@@ -46,14 +46,6 @@ extension Publishers {
                     } else {
                         return [.finished]
                     }
-                },
-                transformCompletion: {
-                    switch $0 {
-                    case .finished:
-                        return [.finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
                 }
             )
 

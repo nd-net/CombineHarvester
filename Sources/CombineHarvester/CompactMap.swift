@@ -19,13 +19,6 @@ extension Publishers {
                         return [.demand(.max(1))]
                     }
                     return [.value(transformed)]
-                }, transformCompletion: { completion in
-                    switch completion {
-                    case .finished:
-                        return [.finished]
-                    case let .failure(error):
-                        return [.failure(error)]
-                    }
                 }
             )
 
