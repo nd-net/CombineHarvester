@@ -14,7 +14,7 @@ class FutureTests: XCTestCase {
         var receiver: TestSubject<String, TestError>
         var subscription: Cancellable
 
-        let publisher = Publishers.Future { callback = $0 }
+        let publisher = Future { callback = $0 }
 
         XCTAssertNil(callback, "User does not get the callback before subscribing")
 
@@ -44,7 +44,7 @@ class FutureTests: XCTestCase {
         var receiver: TestSubject<String, TestError>
         var subscription: Cancellable
 
-        let publisher = Publishers.Future { callback = $0 }
+        let publisher = Future { callback = $0 }
 
         receiver = TestSubject()
 
@@ -64,7 +64,7 @@ class FutureTests: XCTestCase {
         var receiver: TestSubject<String, TestError>
         var subscription: Cancellable
 
-        let publisher = Publishers.Future { callback = $0 }
+        let publisher = Future { callback = $0 }
 
         receiver = TestSubject()
         subscription = publisher.subscribe(receiver)
