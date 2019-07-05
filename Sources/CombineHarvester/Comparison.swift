@@ -9,9 +9,14 @@ extension Publishers {
         public let upstream: Upstream
 
         /// A closure that receives two elements and returns `true` if they are in increasing order.
-        public let areInIncreasingOrder: (Upstream.Output, Upstream.Output) -> Bool
+        public let areInIncreasingOrder: (Output, Output) -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public init(upstream: Upstream, areInIncreasingOrder: @escaping (Output, Output) -> Bool) {
+            self.upstream = upstream
+            self.areInIncreasingOrder = areInIncreasingOrder
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             self.upstream.reduce(nil as Output?) { prev, cur in
                 guard let prev = prev else {
                     return cur
@@ -36,9 +41,14 @@ extension Publishers {
         public let upstream: Upstream
 
         /// A closure that receives two elements and returns `true` if they are in increasing order.
-        public let areInIncreasingOrder: (Upstream.Output, Upstream.Output) throws -> Bool
+        public let areInIncreasingOrder: (Output, Output) throws -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryComparison<Upstream>.Failure {
+        public init(upstream: Upstream, areInIncreasingOrder: @escaping (Output, Output) throws -> Bool) {
+            self.upstream = upstream
+            self.areInIncreasingOrder = areInIncreasingOrder
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             self.upstream.tryReduce(nil as Output?) { prev, cur in
                 guard let prev = prev else {
                     return cur

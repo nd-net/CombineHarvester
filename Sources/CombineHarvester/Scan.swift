@@ -6,7 +6,14 @@ extension Publishers {
         public let upstream: Upstream
 
         public let initialResult: Output
+
         public let nextPartialResult: (Output, Upstream.Output) -> Output
+
+        public init(upstream: Upstream, initialResult: Output, nextPartialResult: @escaping (Output, Upstream.Output) -> Output) {
+            self.upstream = upstream
+            self.initialResult = initialResult
+            self.nextPartialResult = nextPartialResult
+        }
 
         public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
             var currentValue = self.initialResult
@@ -25,6 +32,12 @@ extension Publishers {
         public let initialResult: Output
 
         public let nextPartialResult: (Output, Upstream.Output) throws -> Output
+
+        public init(upstream: Upstream, initialResult: Output, nextPartialResult: @escaping (Output, Upstream.Output) throws -> Output) {
+            self.upstream = upstream
+            self.initialResult = initialResult
+            self.nextPartialResult = nextPartialResult
+        }
 
         public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             var currentValue = self.initialResult

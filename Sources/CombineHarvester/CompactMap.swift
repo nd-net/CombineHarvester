@@ -10,7 +10,12 @@ extension Publishers {
         /// A closure that receives values from the upstream publisher and returns optional values.
         public let transform: (Upstream.Output) -> Output?
 
-        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Upstream.Failure == S.Failure {
+        public init(upstream: Upstream, transform: @escaping (Upstream.Output) -> Output?) {
+            self.upstream = upstream
+            self.transform = transform
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
             let transformingSubscriber = TransformingSubscriber<Upstream.Output, Upstream.Failure, Output, Failure>(
                 subscriber: subscriber,
                 transformRequest: { [.demand($0)] },
@@ -33,10 +38,15 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
-        /// an error-throwing closure that receives values from the upstream publisher and returns optional values.
+        /// An error-throwing closure that receives values from the upstream publisher and returns optional values.
         ///
         /// If this closure throws an error, the publisher fails.
         public let transform: (Upstream.Output) throws -> Output?
+
+        public init(upstream: Upstream, transform: @escaping (Upstream.Output) throws -> Output?) {
+            self.upstream = upstream
+            self.transform = transform
+        }
 
         public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             let transformingSubscriber = TransformingSubscriber<Upstream.Output, Upstream.Failure, Output, Failure>(

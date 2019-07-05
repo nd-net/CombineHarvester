@@ -11,8 +11,15 @@ extension Publishers {
         /// The element to scan for in the upstream publisher.
         public let output: Upstream.Output
 
+        public init(upstream: Upstream, output: Upstream.Output) {
+            self.upstream = upstream
+            self.output = output
+        }
+
         public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, S.Input == Output {
-            self.upstream.contains(where: { $0 == self.output }).subscribe(subscriber)
+            self.upstream
+                .contains(where: { $0 == self.output })
+                .subscribe(subscriber)
         }
     }
 }
@@ -32,7 +39,12 @@ extension Publishers {
         /// The closure that determines whether the publisher should consider an element as a match.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, S.Input == Output {
+        public init(upstream: Upstream, predicate: @escaping (Upstream.Output) -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, S.Input == Output {
             self.upstream.compactMap { self.predicate($0) ? true : nil }
                 .first()
                 .replaceEmpty(with: false)
@@ -51,6 +63,11 @@ extension Publishers {
 
         /// The error-throwing closure that determines whether this publisher should emit a `true` element.
         public let predicate: (Upstream.Output) throws -> Bool
+
+        public init(upstream: Upstream, predicate: @escaping (Upstream.Output) throws -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
 
         public func receive<S: Subscriber>(subscriber: S) where S.Failure == Failure, S.Input == Output {
             self.upstream.tryCompactMap { try self.predicate($0) ? true : nil }

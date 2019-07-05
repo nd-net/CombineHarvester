@@ -39,9 +39,14 @@ extension Publishers {
         public let upstream: Upstream
 
         /// The closure that indicates whether to drop the element.
-        public let predicate: (Upstream.Output) -> Bool
+        public let predicate: (Output) -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public init(upstream: Upstream, predicate: @escaping (Output) -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             var finished = false
 
             upstream.compactMap { value in
@@ -63,9 +68,14 @@ extension Publishers {
         public let upstream: Upstream
 
         /// The error-throwing closure that indicates whether to drop the element.
-        public let predicate: (Upstream.Output) throws -> Bool
+        public let predicate: (Output) throws -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryDropWhile<Upstream>.Failure {
+        public init(upstream: Upstream, predicate: @escaping (Output) throws -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             var finished = false
 
             upstream.tryCompactMap { value in

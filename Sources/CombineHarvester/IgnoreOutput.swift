@@ -8,7 +8,11 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, S.Input == Output {
+        public init(upstream: Upstream) {
+            self.upstream = upstream
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, S.Input == Output {
             self.upstream
                 .compactMap { _ in nil }
                 .last()

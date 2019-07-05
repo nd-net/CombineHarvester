@@ -6,9 +6,14 @@ extension Publishers {
 
         public let upstream: Upstream
 
-        public let predicate: (Upstream.Output, Upstream.Output) -> Bool
+        public let predicate: (Output, Output) -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public init(upstream: Upstream, predicate: @escaping (Output, Output) -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             var previous: Output?
             upstream.compactMap { value -> Output? in
                 guard let prev = previous else {
@@ -31,9 +36,14 @@ extension Publishers {
 
         public let upstream: Upstream
 
-        public let predicate: (Upstream.Output, Upstream.Output) throws -> Bool
+        public let predicate: (Output, Output) throws -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryRemoveDuplicates<Upstream>.Failure {
+        public init(upstream: Upstream, predicate: @escaping (Output, Output) throws -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             var previous: Output?
             upstream.tryCompactMap { value -> Output? in
                 guard let prev = previous else {

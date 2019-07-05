@@ -23,6 +23,15 @@ extension Publishers {
         /// A closure that executes when the publisher receives a request for more elements.
         public var receiveRequest: ((Subscribers.Demand) -> Void)?
 
+        public init(upstream: Upstream, receiveSubscription: ((Subscription) -> Void)? = nil, receiveOutput: ((Publishers.HandleEvents<Upstream>.Output) -> Void)? = nil, receiveCompletion: ((Subscribers.Completion<Publishers.HandleEvents<Upstream>.Failure>) -> Void)? = nil, receiveCancel: (() -> Void)? = nil, receiveRequest: ((Subscribers.Demand) -> Void)?) {
+            self.upstream = upstream
+            self.receiveSubscription = receiveSubscription
+            self.receiveOutput = receiveOutput
+            self.receiveCompletion = receiveCompletion
+            self.receiveCancel = receiveCancel
+            self.receiveRequest = receiveRequest
+        }
+
         private class HandlingSubscription: Subscription {
             private let upstream: Subscription
             private let receiveRequest: ((Subscribers.Demand) -> Void)?

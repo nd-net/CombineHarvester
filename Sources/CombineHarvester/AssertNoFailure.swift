@@ -19,6 +19,13 @@ extension Publishers {
         /// The line number used in the error message.
         public let line: UInt
 
+        public init(upstream: Upstream, prefix: String, file: StaticString, line: UInt) {
+            self.upstream = upstream
+            self.prefix = prefix
+            self.file = file
+            self.line = line
+        }
+
         public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             self.upstream.mapError { error in
                 fatalError("\(self.prefix) Received .failure(\(error))", file: self.file, line: self.line)

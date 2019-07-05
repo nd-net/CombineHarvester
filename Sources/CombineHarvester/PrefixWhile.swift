@@ -11,7 +11,12 @@ extension Publishers {
         /// The closure that determines whether whether publishing should continue.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public init(upstream: Upstream, predicate: @escaping (Output) -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             self.upstream.subscribe(TransformingSubscriber(
                 subscriber: subscriber,
                 transformRequest: { [.demand($0)] },
@@ -35,15 +40,14 @@ extension Publishers {
         public let upstream: Upstream
 
         /// The error-throwing closure that determines whether publishing should continue.
-        public let predicate: (Upstream.Output) throws -> Bool
+        public let predicate: (Output) throws -> Bool
 
-        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
-        ///
-        /// - SeeAlso: `subscribe(_:)`
-        /// - Parameters:
-        ///     - subscriber: The subscriber to attach to this `Publisher`.
-        ///                   once attached it can begin to receive values.
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryPrefixWhile<Upstream>.Failure {
+        public init(upstream: Upstream, predicate: @escaping (Output) throws -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             self.upstream.subscribe(TransformingSubscriber(
                 subscriber: subscriber,
                 transformRequest: { [.demand($0)] },

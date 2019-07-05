@@ -9,7 +9,12 @@ extension Publishers {
         public let upstream: Upstream
 
         /// A closure that indicates whether to republish an element.
-        public let isIncluded: (Upstream.Output) -> Bool
+        public let isIncluded: (Output) -> Bool
+
+        public init(upstream: Upstream, isIncluded: @escaping (Output) -> Bool) {
+            self.upstream = upstream
+            self.isIncluded = isIncluded
+        }
 
         public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             self.upstream.compactMap { self.isIncluded($0) ? $0 : nil }
@@ -26,9 +31,14 @@ extension Publishers {
         public let upstream: Upstream
 
         /// A error-throwing closure that indicates whether to republish an element.
-        public let isIncluded: (Upstream.Output) throws -> Bool
+        public let isIncluded: (Output) throws -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryFilter<Upstream>.Failure {
+        public init(upstream: Upstream, isIncluded: @escaping (Output) throws -> Bool) {
+            self.upstream = upstream
+            self.isIncluded = isIncluded
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             self.upstream.tryCompactMap { try self.isIncluded($0) ? $0 : nil }
                 .subscribe(subscriber)
         }

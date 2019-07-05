@@ -6,7 +6,12 @@ extension Publishers {
 
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+
+        public init(upstream: Upstream) {
+            self.upstream = upstream
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             var didRequest = false
             var previousValue: Output?
             self.upstream.subscribe(TransformingSubscriber(
@@ -47,7 +52,12 @@ extension Publishers {
         /// The closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
+        public init(upstream: Upstream, predicate: @escaping (Output) -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, Output == S.Input {
             return self.upstream
                 .filter(self.predicate)
                 .last()
@@ -66,7 +76,12 @@ extension Publishers {
         /// The error-throwing closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) throws -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Output == S.Input, S.Failure == Publishers.TryLastWhere<Upstream>.Failure {
+        public init(upstream: Upstream, predicate: @escaping (Output) throws -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Output == S.Input, S.Failure == Failure {
             return self.upstream
                 .tryFilter(self.predicate)
                 .last()

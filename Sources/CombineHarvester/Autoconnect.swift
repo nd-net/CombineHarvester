@@ -7,7 +7,7 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         public final let upstream: Upstream
 
-        public init(_ upstream: Upstream) {
+        public init(upstream: Upstream) {
             self.upstream = upstream
         }
 
@@ -56,6 +56,6 @@ extension ConnectablePublisher {
     ///
     /// - Returns: A publisher which automatically connects to its upstream connectable publisher.
     public func autoconnect() -> Publishers.Autoconnect<Self> {
-        return Publishers.Autoconnect(self)
+        return Publishers.Autoconnect(upstream: self)
     }
 }

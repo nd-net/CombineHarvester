@@ -13,7 +13,7 @@ extension Publishers {
         ///  Return `true` to continue, or `false` to cancel the upstream and finish.
         public let predicate: (Upstream.Output) -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, S.Input == Publishers.AllSatisfy<Upstream>.Output {
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, S.Input == Output {
             self.upstream.compactMap { !self.predicate($0) ? false : nil }
                 .first()
                 .replaceEmpty(with: true)
@@ -34,7 +34,12 @@ extension Publishers {
         /// Return `true` to continue, or `false` to cancel the upstream and complete. The closure may throw, in which case the publisher cancels the upstream publisher and fails with the thrown error.
         public let predicate: (Upstream.Output) throws -> Bool
 
-        public func receive<S: Subscriber>(subscriber: S) where S.Failure == Publishers.TryAllSatisfy<Upstream>.Failure, S.Input == Publishers.TryAllSatisfy<Upstream>.Output {
+        public init(upstream: Upstream, predicate: @escaping (Upstream.Output) throws -> Bool) {
+            self.upstream = upstream
+            self.predicate = predicate
+        }
+
+        public func receive<S: Subscriber>(subscriber: S) where Failure == S.Failure, S.Input == Output {
             self.upstream.tryCompactMap { try !self.predicate($0) ? false : nil }
                 .first()
                 .replaceEmpty(with: true)

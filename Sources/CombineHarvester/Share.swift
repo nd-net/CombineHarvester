@@ -4,9 +4,9 @@ extension Publishers {
         public typealias Output = Upstream.Output
         public typealias Failure = Upstream.Failure
 
-        private let upstream: Upstream
+        public final let upstream: Upstream
 
-        fileprivate init(upstream: Upstream) {
+        public init(upstream: Upstream) {
             self.upstream = upstream
         }
 
