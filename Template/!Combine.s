@@ -3,7 +3,8 @@ import Darwin
 /// A type-erasing cancellable object that executes a provided closure when canceled.
 ///
 /// Subscriber implementations can use this type to provide a “cancellation token” that makes it possible for a caller to cancel a publisher, but not to use the `Subscription` object to request items.
-final public class AnyCancellable : Cancellable {
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+final public class AnyCancellable : Cancellable, Hashable {
 
     /// Initializes the cancellable object with the given cancel-time closure.
     ///
@@ -14,11 +15,60 @@ final public class AnyCancellable : Cancellable {
 
     /// Cancel the activity.
     final public func cancel()
+
+    /// Hashes the essential components of this value by feeding them into the
+    /// given hasher.
+    ///
+    /// Implement this method to conform to the `Hashable` protocol. The
+    /// components used for hashing must be the same as the components compared
+    /// in your type's `==` operator implementation. Call `hasher.combine(_:)`
+    /// with each of these components.
+    ///
+    /// - Important: Never call `finalize()` on `hasher`. Doing so may become a
+    ///   compile-time error in the future.
+    ///
+    /// - Parameter hasher: The hasher to use when combining the components
+    ///   of this instance.
+    final public func hash(into hasher: inout Hasher)
+
+    /// Returns a Boolean value indicating whether two values are equal.
+    ///
+    /// Equality is the inverse of inequality. For any values `a` and `b`,
+    /// `a == b` implies that `a != b` is `false`.
+    ///
+    /// - Parameters:
+    ///   - lhs: A value to compare.
+    ///   - rhs: Another value to compare.
+    public static func == (lhs: AnyCancellable, rhs: AnyCancellable) -> Bool
+
+    /// The hash value.
+    ///
+    /// Hash values are not guaranteed to be equal across different executions of
+    /// your program. Do not save hash values to use during a future execution.
+    ///
+    /// - Important: `hashValue` is deprecated as a `Hashable` requirement. To
+    ///   conform to `Hashable`, implement the `hash(into:)` requirement instead.
+    public var hashValue: Int { get }
+}
+
+extension AnyCancellable {
+
+    /// Stores this AnyCancellable in the specified collection.
+    /// Parameters:
+    ///    - collection: The collection to store this AnyCancellable.
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    final public func store<C>(in collection: inout C) where C : RangeReplaceableCollection, C.Element == AnyCancellable
+
+    /// Stores this AnyCancellable in the specified set.
+    /// Parameters:
+    ///    - collection: The set to store this AnyCancellable.
+    final public func store(in set: inout Set<AnyCancellable>)
 }
 
 /// A type-erasing publisher.
 ///
 /// Use `AnyPublisher` to wrap a publisher whose type has details you don’t want to expose to subscribers or other publishers.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public struct AnyPublisher<Output, Failure> where Failure : Error {
 
     /// Creates a type-erasing publisher to wrap the provided publisher.
@@ -26,14 +76,9 @@ public struct AnyPublisher<Output, Failure> where Failure : Error {
     /// - Parameters:
     ///   - publisher: A publisher to wrap with a type-eraser.
     @inlinable public init<P>(_ publisher: P) where Output == P.Output, Failure == P.Failure, P : Publisher
-
-    /// Creates a type-erasing publisher implemented by the provided closure.
-    ///
-    /// - Parameters:
-    ///   - subscribe: A closure to invoke when a subscriber subscribes to the publisher.
-    @inlinable public init(_ subscribe: @escaping (AnySubscriber<Output, Failure>) -> Void)
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension AnyPublisher : Publisher {
 
     /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
@@ -45,6 +90,7 @@ extension AnyPublisher : Publisher {
     @inlinable public func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S : Subscriber
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 final public class AnySubject<Output, Failure> : Subject where Failure : Error {
 
     public init<S>(_ subject: S) where Output == S.Output, Failure == S.Failure, S : Subject
@@ -74,6 +120,7 @@ final public class AnySubject<Output, Failure> : Subject where Failure : Error {
 ///
 /// Use an `AnySubscriber` to wrap an existing subscriber whose details you don’t want to expose.
 /// You can also use `AnySubscriber` to create a custom subscriber by providing closures for `Subscriber`’s methods, rather than implementing `Subscriber` directly.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public struct AnySubscriber<Input, Failure> : Subscriber, CustomStringConvertible, CustomReflectable, CustomPlaygroundDisplayConvertible where Failure : Error {
 
     public let combineIdentifier: CombineIdentifier
@@ -225,6 +272,7 @@ public struct CombineIdentifier : Hashable, CustomStringConvertible {
 /// A publisher that provides an explicit means of connecting and canceling publication.
 ///
 /// Use `makeConnectable()` to create a `ConnectablePublisher` from any publisher whose failure type is `Never`.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public protocol ConnectablePublisher : Publisher {
 
     /// Connects to the publisher and returns a `Cancellable` instance with which to cancel publishing.
@@ -233,6 +281,7 @@ public protocol ConnectablePublisher : Publisher {
     func connect() -> Cancellable
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension ConnectablePublisher {
 
     /// Automates the process of connecting or disconnecting from this connectable publisher.
@@ -285,14 +334,32 @@ public protocol CustomCombineIdentifierConvertible {
     var combineIdentifier: CombineIdentifier { get }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension CustomCombineIdentifierConvertible where Self : AnyObject {
 
     public var combineIdentifier: CombineIdentifier { get }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+final public class Future<Output, Failure> : Publisher where Failure : Error {
+
+    public typealias Promise = (Result<Output, Failure>) -> Void
+
+    public init(_ attemptToFulfill: @escaping (@escaping Future<Output, Failure>.Promise) -> Void)
+
+    /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
+    ///
+    /// - SeeAlso: `subscribe(_:)`
+    /// - Parameters:
+    ///     - subscriber: The subscriber to attach to this `Publisher`.
+    ///                   once attached it can begin to receive values.
+    final public func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S : Subscriber
+}
+
 /// A scheduler for performing synchronous actions.
 ///
-/// You can only use this scheduler for immediate actions. If you attempt to schedule actions after a specific date, the scheduler produces a fatal error.
+/// You can use this scheduler for immediate actions. If you attempt to schedule actions after a specific date, the scheduler ignores the date and executes synchronously.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public struct ImmediateScheduler : Scheduler {
 
     /// The time type used by the immediate scheduler.
@@ -560,6 +627,165 @@ public struct ImmediateScheduler : Scheduler {
     public func schedule(after date: ImmediateScheduler.SchedulerTimeType, interval: ImmediateScheduler.SchedulerTimeType.Stride, tolerance: ImmediateScheduler.SchedulerTimeType.Stride, options: ImmediateScheduler.SchedulerOptions?, _ action: @escaping () -> Void) -> Cancellable
 }
 
+/// A publisher that emits an output to each subscriber just once, and then finishes.
+///
+/// You can use a `Just` publisher to start a chain of publishers. A `Just` publisher is also useful when replacing a value with `Catch`.
+///
+/// In contrast with `Publishers.Once`, a `Just` publisher cannot fail with an error.
+/// In contrast with `Publishers.Optional`, a `Just` publisher always produces a value.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+public struct Just<Output> : Publisher {
+
+    /// The kind of errors this publisher might publish.
+    ///
+    /// Use `Never` if this `Publisher` does not publish errors.
+    public typealias Failure = Never
+
+    /// The one element that the publisher emits.
+    public let output: Output
+
+    /// Initializes a publisher that emits the specified output just once.
+    ///
+    /// - Parameter output: The one element that the publisher emits.
+    public init(_ output: Output)
+
+    /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
+    ///
+    /// - SeeAlso: `subscribe(_:)`
+    /// - Parameters:
+    ///     - subscriber: The subscriber to attach to this `Publisher`.
+    ///                   once attached it can begin to receive values.
+    public func receive<S>(subscriber: S) where Output == S.Input, S : Subscriber, S.Failure == Just<Output>.Failure
+}
+
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Just : Equatable where Output : Equatable {
+
+    /// Returns a Boolean value indicating whether two values are equal.
+    ///
+    /// Equality is the inverse of inequality. For any values `a` and `b`,
+    /// `a == b` implies that `a != b` is `false`.
+    ///
+    /// - Parameters:
+    ///   - lhs: A value to compare.
+    ///   - rhs: Another value to compare.
+    public static func == (lhs: Just<Output>, rhs: Just<Output>) -> Bool
+}
+
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Just where Output : Comparable {
+
+    public func min() -> Just<Output>
+
+    public func max() -> Just<Output>
+}
+
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Just where Output : Equatable {
+
+    public func contains(_ output: Output) -> Just<Bool>
+
+    public func removeDuplicates() -> Just<Output>
+}
+
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Just {
+
+    public func allSatisfy(_ predicate: (Output) -> Bool) -> Just<Bool>
+
+    public func tryAllSatisfy(_ predicate: (Output) throws -> Bool) -> Publishers.Once<Bool, Error>
+
+    public func collect() -> Just<[Output]>
+
+    public func compactMap<T>(_ transform: (Output) -> T?) -> Publishers.Optional<T, Just<Output>.Failure>
+
+    public func tryCompactMap<T>(_ transform: (Output) throws -> T?) -> Publishers.Optional<T, Error>
+
+    public func min(by areInIncreasingOrder: (Output, Output) -> Bool) -> Just<Output>
+
+    public func tryMin(by areInIncreasingOrder: (Output, Output) throws -> Bool) -> Publishers.Optional<Bool, Error>
+
+    public func max(by areInIncreasingOrder: (Output, Output) -> Bool) -> Just<Output>
+
+    public func tryMax(by areInIncreasingOrder: (Output, Output) throws -> Bool) -> Publishers.Optional<Bool, Error>
+
+    public func prepend(_ elements: Output...) -> Publishers.Sequence<[Output], Just<Output>.Failure>
+
+    public func prepend<S>(_ elements: S) -> Publishers.Sequence<[Output], Just<Output>.Failure> where Output == S.Element, S : Sequence
+
+    public func append(_ elements: Output...) -> Publishers.Sequence<[Output], Just<Output>.Failure>
+
+    public func append<S>(_ elements: S) -> Publishers.Sequence<[Output], Just<Output>.Failure> where Output == S.Element, S : Sequence
+
+    public func contains(where predicate: (Output) -> Bool) -> Just<Bool>
+
+    public func tryContains(where predicate: (Output) throws -> Bool) -> Publishers.Once<Bool, Error>
+
+    public func count() -> Just<Int>
+
+    public func dropFirst(_ count: Int = 1) -> Publishers.Optional<Output, Just<Output>.Failure>
+
+    public func drop(while predicate: (Output) -> Bool) -> Publishers.Optional<Output, Just<Output>.Failure>
+
+    public func tryDrop(while predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
+
+    public func first() -> Just<Output>
+
+    public func first(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Just<Output>.Failure>
+
+    public func tryFirst(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
+
+    public func last() -> Just<Output>
+
+    public func last(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Just<Output>.Failure>
+
+    public func tryLast(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
+
+    public func filter(_ isIncluded: (Output) -> Bool) -> Publishers.Optional<Output, Just<Output>.Failure>
+
+    public func tryFilter(_ isIncluded: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
+
+    public func ignoreOutput() -> Publishers.Empty<Output, Just<Output>.Failure>
+
+    public func map<T>(_ transform: (Output) -> T) -> Just<T>
+
+    public func tryMap<T>(_ transform: (Output) throws -> T) -> Publishers.Once<T, Error>
+
+    public func mapError<E>(_ transform: (Just<Output>.Failure) -> E) -> Publishers.Once<Output, E> where E : Error
+
+    public func output(at index: Int) -> Publishers.Optional<Output, Just<Output>.Failure>
+
+    public func output<R>(in range: R) -> Publishers.Optional<Output, Just<Output>.Failure> where R : RangeExpression, R.Bound == Int
+
+    public func prefix(_ maxLength: Int) -> Publishers.Optional<Output, Just<Output>.Failure>
+
+    public func prefix(while predicate: (Output) -> Bool) -> Publishers.Optional<Output, Just<Output>.Failure>
+
+    public func tryPrefix(while predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
+
+    public func reduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Publishers.Once<T, Just<Output>.Failure>
+
+    public func tryReduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Publishers.Once<T, Error>
+
+    public func removeDuplicates(by predicate: (Output, Output) -> Bool) -> Just<Output>
+
+    public func tryRemoveDuplicates(by predicate: (Output, Output) throws -> Bool) -> Publishers.Once<Output, Error>
+
+    public func replaceError(with output: Output) -> Just<Output>
+
+    public func replaceEmpty(with output: Output) -> Just<Output>
+
+    public func retry(_ times: Int) -> Just<Output>
+
+    public func retry() -> Just<Output>
+
+    public func scan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Publishers.Once<T, Just<Output>.Failure>
+
+    public func tryScan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Publishers.Once<T, Error>
+
+    public func setFailureType<E>(to failureType: E.Type) -> Publishers.Once<Output, E> where E : Error
+}
+
 /// A subject that passes along values and completion.
 ///
 /// Use a `PassthroughSubject` in unit tests when you want a publisher than can publish specific values on-demand during tests.
@@ -585,6 +811,39 @@ final public class PassthroughSubject<Output, Failure> : Subject where Failure :
     ///
     /// - Parameter completion: A `Completion` instance which indicates whether publishing has finished normally or failed with an error.
     final public func send(completion: Subscribers.Completion<Failure>)
+}
+
+/// Adds a `Publisher` to a property.
+///
+/// Properties annotated with `@Published` contain both the stored value and a publisher which sends any new values after the property value has been sent. New subscribers will receive the current value of the property first.
+@propertyWrapper public struct Published<Value> {
+
+    /// Initialize the storage of the Published property as well as the corresponding `Publisher`.
+    public init(initialValue: Value)
+
+    /// The current value of the property.
+    public var value: Value
+
+    public class Publisher : Publisher {
+
+        /// The kind of values published by this publisher.
+        public typealias Output = Value
+
+        /// The kind of errors this publisher might publish.
+        ///
+        /// Use `Never` if this `Publisher` does not publish errors.
+        public typealias Failure = Never
+
+        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
+        ///
+        /// - SeeAlso: `subscribe(_:)`
+        /// - Parameters:
+        ///     - subscriber: The subscriber to attach to this `Publisher`.
+        ///                   once attached it can begin to receive values.
+        public func receive<S>(subscriber: S) where Value == S.Input, S : Subscriber, S.Failure == Published<Value>.Publisher.Failure
+    }
+
+    public var delegateValue: Published<Value>.Publisher { mutating get }
 }
 
 /// Declares that a type can transmit a sequence of values over time.
@@ -621,6 +880,7 @@ public protocol Publisher {
     func receive<S>(subscriber: S) where S : Subscriber, Self.Failure == S.Failure, Self.Output == S.Input
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     public func multicast<S>(_ createSubject: @escaping () -> S) -> Publishers.Multicast<Self, S> where S : Subject, Self.Failure == S.Failure, Self.Output == S.Output
@@ -628,6 +888,7 @@ extension Publisher {
     public func multicast<S>(subject: S) -> Publishers.Multicast<Self, S> where S : Subject, Self.Failure == S.Failure, Self.Output == S.Output
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Specifies the scheduler on which to perform subscribe, cancel, and request operations.
@@ -649,6 +910,7 @@ extension Publisher {
     public func subscribe<S>(on scheduler: S, options: S.SchedulerOptions? = nil) -> Publishers.SubscribeOn<Self, S> where S : Scheduler
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Measures and emits the time interval between events received from an upstream publisher.
@@ -661,6 +923,7 @@ extension Publisher {
     public func measureInterval<S>(using scheduler: S, options: S.SchedulerOptions? = nil) -> Publishers.MeasureInterval<Self, S> where S : Scheduler
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Omits elements from the upstream publisher until a given closure returns false, before republishing all remaining elements.
@@ -679,6 +942,7 @@ extension Publisher {
     public func tryDrop(while predicate: @escaping (Self.Output) throws -> Bool) -> Publishers.TryDropWhile<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Republishes all elements that match a provided closure.
@@ -696,6 +960,7 @@ extension Publisher {
     public func tryFilter(_ isIncluded: @escaping (Self.Output) throws -> Bool) -> Publishers.TryFilter<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Raises a debugger signal when a provided closure needs to stop the process in the debugger.
@@ -718,6 +983,7 @@ extension Publisher {
     public func breakpointOnError() -> Publishers.Breakpoint<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Publishes a single Boolean value that indicates whether all received elements pass a given predicate.
@@ -739,6 +1005,7 @@ extension Publisher {
     public func tryAllSatisfy(_ predicate: @escaping (Self.Output) throws -> Bool) -> Publishers.TryAllSatisfy<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Attaches a subscriber with closure-based behavior.
@@ -747,9 +1014,10 @@ extension Publisher {
     /// - parameter receiveValue: The closure to execute on receipt of a value. If `nil`, the sink uses an empty closure.
     /// - parameter receiveComplete: The closure to execute on completion. If `nil`, the sink uses an empty closure.
     /// - Returns: A subscriber that performs the provided closures upon receiving values or completion.
-    public func sink(receiveCompletion: ((Subscribers.Completion<Self.Failure>) -> Void)? = nil, receiveValue: @escaping ((Self.Output) -> Void)) -> Subscribers.Sink<Self>
+    public func sink(receiveCompletion: ((Subscribers.Completion<Self.Failure>) -> Void)? = nil, receiveValue: @escaping ((Self.Output) -> Void)) -> Subscribers.Sink<Self.Output, Self.Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher where Self.Output : Equatable {
 
     /// Publishes only elements that don’t match the previous element.
@@ -758,6 +1026,7 @@ extension Publisher where Self.Output : Equatable {
     public func removeDuplicates() -> Publishers.RemoveDuplicates<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     public func removeDuplicates(by predicate: @escaping (Self.Output, Self.Output) -> Bool) -> Publishers.RemoveDuplicates<Self>
@@ -765,6 +1034,7 @@ extension Publisher {
     public func tryRemoveDuplicates(by predicate: @escaping (Self.Output, Self.Output) throws -> Bool) -> Publishers.TryRemoveDuplicates<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Decodes the output from upstream using a specified `TopLevelDecoder`.
@@ -772,6 +1042,7 @@ extension Publisher {
     public func decode<Item, Coder>(type: Item.Type, decoder: Coder) -> Publishers.Decode<Self, Item, Coder> where Item : Decodable, Coder : TopLevelDecoder, Self.Output == Coder.Input
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher where Self.Output : Encodable {
 
     /// Encodes the output from upstream using a specified `TopLevelEncoder`.
@@ -779,6 +1050,7 @@ extension Publisher where Self.Output : Encodable {
     public func encode<Coder>(encoder: Coder) -> Publishers.Encode<Self, Coder> where Coder : TopLevelEncoder
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher where Self.Output : Equatable {
 
     /// Publishes a Boolean value upon receiving an element equal to the argument.
@@ -789,7 +1061,18 @@ extension Publisher where Self.Output : Equatable {
     public func contains(_ output: Self.Output) -> Publishers.Contains<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
+
+    /// Subscribes to an additional publisher and publishes a tuple upon receiving output from either publisher.
+    ///
+    /// The combined publisher passes through any requests to *all* upstream publishers. However, it still obeys the demand-fulfilling rule of only sending the request amount downstream. If the demand isn’t `.unlimited`, it drops values from upstream publishers. It implements this by using a buffer size of 1 for each upstream, and holds the most recent value in each buffer.
+    /// All upstream publishers need to finish for this publisher to finsh. If an upstream publisher never publishes a value, this publisher never finishes.
+    /// If any of the combined publishers terminates with a failure, this publisher also fails.
+    /// - Parameters:
+    ///   - other: Another publisher to combine with this one.
+    /// - Returns: A publisher that receives and combines elements from this and another publisher.
+    public func combineLatest<P>(_ other: P) -> Publishers.CombineLatest<Self, P> where P : Publisher, Self.Failure == P.Failure
 
     /// Subscribes to an additional publisher and invokes a closure upon receiving output from either publisher.
     ///
@@ -800,7 +1083,18 @@ extension Publisher {
     ///   - other: Another publisher to combine with this one.
     ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
     /// - Returns: A publisher that receives and combines elements from this and another publisher.
-    public func combineLatest<P, T>(_ other: P, _ transform: @escaping (Self.Output, P.Output) -> T) -> Publishers.CombineLatest<Self, P, T> where P : Publisher, Self.Failure == P.Failure
+    public func combineLatest<P, T>(_ other: P, _ transform: @escaping (Self.Output, P.Output) -> T) -> Publishers.Map<Publishers.CombineLatest<Self, P>, T> where P : Publisher, Self.Failure == P.Failure
+
+    /// Subscribes to two additional publishers and publishes a tuple upon receiving output from any of the publishers.
+    ///
+    /// The combined publisher passes through any requests to *all* upstream publishers. However, it still obeys the demand-fulfilling rule of only sending the request amount downstream. If the demand isn’t `.unlimited`, it drops values from upstream publishers. It implements this by using a buffer size of 1 for each upstream, and holds the most recent value in each buffer.
+    /// All upstream publishers need to finish for this publisher to finish. If an upstream publisher never publishes a value, this publisher never finishes.
+    /// If any of the combined publishers terminates with a failure, this publisher also fails.
+    /// - Parameters:
+    ///   - publisher1: A second publisher to combine with this one.
+    ///   - publisher2: A third publisher to combine with this one.
+    /// - Returns: A publisher that receives and combines elements from this publisher and two other publishers.
+    public func combineLatest<P, Q>(_ publisher1: P, _ publisher2: Q) -> Publishers.CombineLatest3<Self, P, Q> where P : Publisher, Q : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure
 
     /// Subscribes to two additional publishers and invokes a closure upon receiving output from any of the publishers.
     ///
@@ -812,7 +1106,19 @@ extension Publisher {
     ///   - publisher2: A third publisher to combine with this one.
     ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
     /// - Returns: A publisher that receives and combines elements from this publisher and two other publishers.
-    public func combineLatest<P, Q, T>(_ publisher1: P, _ publisher2: Q, _ transform: @escaping (Self.Output, P.Output, Q.Output) -> T) -> Publishers.CombineLatest3<Self, P, Q, T> where P : Publisher, Q : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure
+    public func combineLatest<P, Q, T>(_ publisher1: P, _ publisher2: Q, _ transform: @escaping (Self.Output, P.Output, Q.Output) -> T) -> Publishers.Map<Publishers.CombineLatest3<Self, P, Q>, T> where P : Publisher, Q : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure
+
+    /// Subscribes to three additional publishers and publishes a tuple upon receiving output from any of the publishers.
+    ///
+    /// The combined publisher passes through any requests to *all* upstream publishers. However, it still obeys the demand-fulfilling rule of only sending the request amount downstream. If the demand isn’t `.unlimited`, it drops values from upstream publishers. It implements this by using a buffer size of 1 for each upstream, and holds the most recent value in each buffer.
+    /// All upstream publishers need to finish for this publisher to finish. If an upstream publisher never publishes a value, this publisher never finishes.
+    /// If any of the combined publishers terminates with a failure, this publisher also fails.
+    /// - Parameters:
+    ///   - publisher1: A second publisher to combine with this one.
+    ///   - publisher2: A third publisher to combine with this one.
+    ///   - publisher3: A fourth publisher to combine with this one.
+    /// - Returns: A publisher that receives and combines elements from this publisher and three other publishers.
+    public func combineLatest<P, Q, R>(_ publisher1: P, _ publisher2: Q, _ publisher3: R) -> Publishers.CombineLatest4<Self, P, Q, R> where P : Publisher, Q : Publisher, R : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure, Q.Failure == R.Failure
 
     /// Subscribes to three additional publishers and invokes a closure upon receiving output from any of the publishers.
     ///
@@ -825,48 +1131,10 @@ extension Publisher {
     ///   - publisher3: A fourth publisher to combine with this one.
     ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
     /// - Returns: A publisher that receives and combines elements from this publisher and three other publishers.
-    public func combineLatest<P, Q, R, T>(_ publisher1: P, _ publisher2: Q, _ publisher3: R, _ transform: @escaping (Self.Output, P.Output, Q.Output, R.Output) -> T) -> Publishers.CombineLatest4<Self, P, Q, R, T> where P : Publisher, Q : Publisher, R : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure, Q.Failure == R.Failure
-
-    /// Subscribes to an additional publisher and invokes an error-throwing closure upon receiving output from either publisher.
-    ///
-    /// The combined publisher passes through any requests to *all* upstream publishers. However, it still obeys the demand-fulfilling rule of only sending the request amount downstream. If the demand isn’t `.unlimited`, it drops values from upstream publishers. It implements this by using a buffer size of 1 for each upstream, and holds the most recent value in each buffer.
-    /// If the provided transform throws an error, the publisher fails with the error. `Self.Failure` and `P.Failure` must both be `Swift.Error`.
-    /// All upstream publishers need to finish for this publisher to finish. If an upstream publisher never publishes a value, this publisher never finishes.
-    /// If any of the combined publishers terminates with a failure, this publisher also fails.
-    /// - Parameters:
-    ///   - other: Another publisher to combine with this one.
-    ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
-    /// - Returns: A publisher that receives and combines elements from this and another publisher.
-    public func tryCombineLatest<P, T>(_ other: P, _ transform: @escaping (Self.Output, P.Output) throws -> T) -> Publishers.TryCombineLatest<Self, P, T> where P : Publisher, P.Failure == Error
-
-    /// Subscribes to two additional publishers and invokes an error-throwing closure upon receiving output from any of the publishers.
-    ///
-    /// The combined publisher passes through any requests to *all* upstream publishers. However, it still obeys the demand-fulfilling rule of only sending the request amount downstream. If the demand isn’t `.unlimited`, it drops values from upstream publishers. It implements this by using a buffer size of 1 for each upstream, and holds the most recent value in each buffer.
-    /// If the provided transform throws an error, the publisher fails with the error. `Self.Failure`, `P.Failure`, and `Q.Failure` must all be `Swift.Error`.
-    /// All upstream publishers need to finish for this publisher to finish. If an upstream publisher never publishes a value, this publisher never finishes.
-    /// If any of the combined publishers terminates with a failure, this publisher also fails.
-    /// - Parameters:
-    ///   - publisher1: A second publisher to combine with this one.
-    ///   - publisher2: A third publisher to combine with this one.
-    ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
-    /// - Returns: A publisher that receives and combines elements from this publisher and two other publishers.
-    public func tryCombineLatest<P, Q, T>(_ publisher1: P, _ publisher2: Q, _ transform: @escaping (Self.Output, P.Output, Q.Output) throws -> T) -> Publishers.TryCombineLatest3<Self, P, Q, T> where P : Publisher, Q : Publisher, P.Failure == Error, Q.Failure == Error
-
-    /// Subscribes to three additional publishers and invokes an error-throwing closure upon receiving output from any of the publishers.
-    ///
-    /// The combined publisher passes through any requests to *all* upstream publishers. However, it still obeys the demand-fulfilling rule of only sending the request amount downstream. If the demand isn’t `.unlimited`, it drops values from upstream publishers. It implements this by using a buffer size of 1 for each upstream, and holds the most recent value in each buffer.
-    /// If the provided transform throws an error, the publisher fails with the error. `Self.Failure`, `P.Failure`, `Q.Failure`, and `R.Failure` must all be `Swift.Error`.
-    /// All upstream publishers need to finish for this publisher to finish. If an upstream publisher never publishes a value, this publisher never finishes.
-    /// If any of the combined publishers terminates with a failure, this publisher also fails.
-    /// - Parameters:
-    ///   - publisher1: A second publisher to combine with this one.
-    ///   - publisher2: A third publisher to combine with this one.
-    ///   - publisher3: A fourth publisher to combine with this one.
-    ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
-    /// - Returns: A publisher that receives and combines elements from this publisher and three other publishers.
-    public func tryCombineLatest<P, Q, R, T>(_ publisher1: P, _ publisher2: Q, _ publisher3: R, _ transform: @escaping (Self.Output, P.Output, Q.Output, R.Output) throws -> T) -> Publishers.TryCombineLatest4<Self, P, Q, R, T> where P : Publisher, Q : Publisher, R : Publisher, P.Failure == Error, Q.Failure == Error, R.Failure == Error
+    public func combineLatest<P, Q, R, T>(_ publisher1: P, _ publisher2: Q, _ publisher3: R, _ transform: @escaping (Self.Output, P.Output, Q.Output, R.Output) -> T) -> Publishers.Map<Publishers.CombineLatest4<Self, P, Q, R>, T> where P : Publisher, Q : Publisher, R : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure, Q.Failure == R.Failure
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Republishes elements up to the specified maximum count.
@@ -876,6 +1144,7 @@ extension Publisher {
     public func prefix(_ maxLength: Int) -> Publishers.Output<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Prints log messages for all publishing events.
@@ -885,6 +1154,7 @@ extension Publisher {
     public func print(_ prefix: String = "", to stream: TextOutputStream? = nil) -> Publishers.Print<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Republishes elements while a predicate closure indicates publishing should continue.
@@ -904,6 +1174,7 @@ extension Publisher {
     public func tryPrefix(while predicate: @escaping (Self.Output) throws -> Bool) -> Publishers.TryPrefixWhile<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher where Self.Failure == Never {
 
     /// Changes the failure type declared by the upstream publisher.
@@ -915,6 +1186,7 @@ extension Publisher where Self.Failure == Never {
     public func setFailureType<E>(to failureType: E.Type) -> Publishers.SetFailureType<Self, E> where E : Error
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Publishes a Boolean value upon receiving an element that satisfies the predicate closure.
@@ -932,6 +1204,7 @@ extension Publisher {
     public func tryContains(where predicate: @escaping (Self.Output) throws -> Bool) -> Publishers.TryContainsWhere<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Attaches the specified subscriber to this publisher.
@@ -944,6 +1217,7 @@ extension Publisher {
     public func subscribe<S>(_ subscriber: S) where S : Subscriber, Self.Failure == S.Failure, Self.Output == S.Input
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher where Self.Failure == Never {
 
     /// Creates a connectable wrapper around the publisher.
@@ -952,6 +1226,7 @@ extension Publisher where Self.Failure == Never {
     public func makeConnectable() -> Publishers.MakeConnectable<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Collects all received elements, and emits a single array of the collection when the upstream publisher finishes.
@@ -984,6 +1259,7 @@ extension Publisher {
     public func collect<S>(_ strategy: Publishers.TimeGroupingStrategy<S>, options: S.SchedulerOptions? = nil) -> Publishers.CollectByTime<Self, S> where S : Scheduler
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Specifies the scheduler on which to receive elements from the publisher.
@@ -1006,6 +1282,7 @@ extension Publisher {
     public func receive<S>(on scheduler: S, options: S.SchedulerOptions? = nil) -> Publishers.ReceiveOn<Self, S> where S : Scheduler
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Republishes elements until another publisher emits an element.
@@ -1017,11 +1294,13 @@ extension Publisher {
     public func prefix<P>(untilOutputFrom publisher: P) -> Publishers.PrefixUntilOutput<Self, P> where P : Publisher
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     public func subscribe<S>(_ subject: S) -> AnyCancellable where S : Subject, Self.Failure == S.Failure, Self.Output == S.Output
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Applies a closure that accumulates each element of a stream and publishes a final result upon completion.
@@ -1042,6 +1321,7 @@ extension Publisher {
     public func tryReduce<T>(_ initialResult: T, _ nextPartialResult: @escaping (T, Self.Output) throws -> T) -> Publishers.TryReduce<Self, T>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Calls a closure with each received element and publishes any returned optional that has a value.
@@ -1058,6 +1338,7 @@ extension Publisher {
     public func tryCompactMap<T>(_ transform: @escaping (Self.Output) throws -> T?) -> Publishers.TryCompactMap<Self, T>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Combines elements from this publisher with those from another publisher, delivering an interleaved sequence of elements.
@@ -1152,6 +1433,7 @@ extension Publisher {
     public func merge(with other: Self) -> Publishers.MergeMany<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Transforms elements from the upstream publisher by providing the current element to a closure along with the last value returned by the closure.
@@ -1179,6 +1461,7 @@ extension Publisher {
     public func tryScan<T>(_ initialResult: T, _ nextPartialResult: @escaping (T, Self.Output) throws -> T) -> Publishers.TryScan<Self, T>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Publishes the number of elements received from the upstream publisher.
@@ -1188,6 +1471,7 @@ extension Publisher {
     public func count() -> Publishers.Count<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Only publishes the last element of a stream that satisfies a predicate closure, after the stream finishes.
@@ -1203,6 +1487,7 @@ extension Publisher {
     public func tryLast(where predicate: @escaping (Self.Output) throws -> Bool) -> Publishers.TryLastWhere<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Ingores all upstream elements, but passes along a completion state (finished or failed).
@@ -1212,6 +1497,7 @@ extension Publisher {
     public func ignoreOutput() -> Publishers.IgnoreOutput<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher where Self.Failure == Never {
 
     /// Assigns the value of a KVO-compliant property from a publisher.
@@ -1223,6 +1509,7 @@ extension Publisher where Self.Failure == Never {
     public func assign<Root>(to keyPath: ReferenceWritableKeyPath<Root, Self.Output>, on object: Root) -> AnyCancellable
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher where Self.Failure == Self.Output.Failure, Self.Output : Publisher {
 
     /// Flattens the stream of events from multiple upstream publishers to appear as if they were coming from a single stream of events.
@@ -1232,6 +1519,7 @@ extension Publisher where Self.Failure == Self.Output.Failure, Self.Output : Pub
     public func switchToLatest() -> Publishers.SwitchToLatest<Self.Output, Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Attempts to recreate a failed subscription with the upstream publisher using a specified number of attempts to establish the connection.
@@ -1240,13 +1528,9 @@ extension Publisher {
     /// - Parameter retries: The number of times to attempt to recreate the subscription.
     /// - Returns: A publisher that attempts to recreate its subscription to a failed upstream publisher.
     public func retry(_ retries: Int) -> Publishers.Retry<Self>
-
-    /// Performs an unlimited number of attempts to recreate the subscription to the upstream publisher if it fails.
-    ///
-    /// - Returns: A publisher that attempts to recreate its subscription to a failed upstream publisher.
-    public func retry() -> Publishers.Retry<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Converts any failure from the upstream publisher into a new error.
@@ -1258,6 +1542,7 @@ extension Publisher {
     public func mapError<E>(_ transform: @escaping (Self.Failure) -> E) -> Publishers.MapError<Self, E> where E : Error
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Publishes either the most-recent or first element published by the upstream publisher in the specified time interval.
@@ -1270,6 +1555,7 @@ extension Publisher {
     public func throttle<S>(for interval: S.SchedulerTimeType.Stride, scheduler: S, latest: Bool) -> Publishers.Throttle<Self, S> where S : Scheduler
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Returns a publisher as a class instance.
@@ -1280,6 +1566,7 @@ extension Publisher {
     public func share() -> Publishers.Share<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher where Self.Output : Comparable {
 
     /// Publishes the minimum value received from the upstream publisher, after it finishes.
@@ -1295,6 +1582,7 @@ extension Publisher where Self.Output : Comparable {
     public func max() -> Publishers.Comparison<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Publishes the minimum value received from the upstream publisher, after it finishes.
@@ -1326,6 +1614,7 @@ extension Publisher {
     public func tryMax(by areInIncreasingOrder: @escaping (Self.Output, Self.Output) throws -> Bool) -> Publishers.TryComparison<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Replaces nil elements in the stream with the proviced element.
@@ -1335,6 +1624,7 @@ extension Publisher {
     public func replaceNil<T>(with output: T) -> Publishers.Map<Self, T> where Self.Output == T?
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Replaces any errors in the stream with the provided element.
@@ -1352,6 +1642,7 @@ extension Publisher {
     public func replaceEmpty(with output: Self.Output) -> Publishers.ReplaceEmpty<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Raises a fatal error when its upstream publisher fails, and otherwise republishes all received input.
@@ -1366,6 +1657,7 @@ extension Publisher {
     public func assertNoFailure(_ prefix: String = "", file: StaticString = #file, line: UInt = #line) -> Publishers.AssertNoFailure<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Ignores elements from the upstream publisher until it receives an element from a second publisher.
@@ -1378,6 +1670,7 @@ extension Publisher {
     public func drop<P>(untilOutputFrom publisher: P) -> Publishers.DropUntilOutput<Self, P> where P : Publisher, Self.Failure == P.Failure
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Performs the specified closures when publisher events occur.
@@ -1392,6 +1685,7 @@ extension Publisher {
     public func handleEvents(receiveSubscription: ((Subscription) -> Void)? = nil, receiveOutput: ((Self.Output) -> Void)? = nil, receiveCompletion: ((Subscribers.Completion<Self.Failure>) -> Void)? = nil, receiveCancel: (() -> Void)? = nil, receiveRequest: ((Subscribers.Demand) -> Void)? = nil) -> Publishers.HandleEvents<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Prefixes a `Publisher`'s output with the specified sequence.
@@ -1425,6 +1719,7 @@ extension Publisher {
     public func append<P>(_ publisher: P) -> Publishers.Concatenate<Self, P> where P : Publisher, Self.Failure == P.Failure, Self.Output == P.Output
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Publishes elements only after a specified time interval elapses between events.
@@ -1438,6 +1733,7 @@ extension Publisher {
     public func debounce<S>(for dueTime: S.SchedulerTimeType.Stride, scheduler: S, options: S.SchedulerOptions? = nil) -> Publishers.Debounce<Self, S> where S : Scheduler
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Only publishes the last element of a stream, after the stream finishes.
@@ -1445,6 +1741,7 @@ extension Publisher {
     public func last() -> Publishers.Last<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Transforms all elements from the upstream publisher with a provided closure.
@@ -1461,6 +1758,7 @@ extension Publisher {
     public func tryMap<T>(_ transform: @escaping (Self.Output) throws -> T) -> Publishers.TryMap<Self, T>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Terminates publishing if the upstream publisher exceeds the specified time interval without producing an element.
@@ -1474,11 +1772,13 @@ extension Publisher {
     public func timeout<S>(_ interval: S.SchedulerTimeType.Stride, scheduler: S, options: S.SchedulerOptions? = nil, customError: (() -> Self.Failure)? = nil) -> Publishers.Timeout<Self, S> where S : Scheduler
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     public func buffer(size: Int, prefetch: Publishers.PrefetchStrategy, whenFull: Publishers.BufferingStrategy<Self.Failure>) -> Publishers.Buffer<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Combine elements from another publisher and deliver pairs of elements as tuples.
@@ -1490,6 +1790,17 @@ extension Publisher {
     /// - Parameter other: Another publisher.
     /// - Returns: A publisher that emits pairs of elements from the upstream publishers as tuples.
     public func zip<P>(_ other: P) -> Publishers.Zip<Self, P> where P : Publisher, Self.Failure == P.Failure
+
+    /// Combine elements from another publisher and deliver a transformed output.
+    ///
+    /// The returned publisher waits until both publishers have emitted an event, then delivers the oldest unconsumed event from each publisher together as a tuple to the subscriber.
+    /// For example, if publisher `P1` emits elements `a` and `b`, and publisher `P2` emits event `c`, the zip publisher emits the tuple `(a, c)`. It won’t emit a tuple with event `b` until `P2` emits another event.
+    /// If either upstream publisher finishes successfuly or fails with an error, the zipped publisher does the same.
+    ///
+    /// - Parameter other: Another publisher.
+    ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
+    /// - Returns: A publisher that emits pairs of elements from the upstream publishers as tuples.
+    public func zip<P, T>(_ other: P, _ transform: @escaping (Self.Output, P.Output) -> T) -> Publishers.Map<Publishers.Zip<Self, P>, T> where P : Publisher, Self.Failure == P.Failure
 
     /// Combine elements from two other publishers and deliver groups of elements as tuples.
     ///
@@ -1503,6 +1814,19 @@ extension Publisher {
     /// - Returns: A publisher that emits groups of elements from the upstream publishers as tuples.
     public func zip<P, Q>(_ publisher1: P, _ publisher2: Q) -> Publishers.Zip3<Self, P, Q> where P : Publisher, Q : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure
 
+    /// Combine elements from two other publishers and deliver a transformed output.
+    ///
+    /// The returned publisher waits until all three publishers have emitted an event, then delivers the oldest unconsumed event from each publisher as a tuple to the subscriber.
+    /// For example, if publisher `P1` emits elements `a` and `b`, and publisher `P2` emits elements `c` and `d`, and publisher `P3` emits the event `e`, the zip publisher emits the tuple `(a, c, e)`. It won’t emit a tuple with elements `b` or `d` until `P3` emits another event.
+    /// If any upstream publisher finishes successfuly or fails with an error, the zipped publisher does the same.
+    ///
+    /// - Parameters:
+    ///   - publisher1: A second publisher.
+    ///   - publisher2: A third publisher.
+    ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
+    /// - Returns: A publisher that emits groups of elements from the upstream publishers as tuples.
+    public func zip<P, Q, T>(_ publisher1: P, _ publisher2: Q, _ transform: @escaping (Self.Output, P.Output, Q.Output) -> T) -> Publishers.Map<Publishers.Zip3<Self, P, Q>, T> where P : Publisher, Q : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure
+
     /// Combine elements from three other publishers and deliver groups of elements as tuples.
     ///
     /// The returned publisher waits until all four publishers have emitted an event, then delivers the oldest unconsumed event from each publisher as a tuple to the subscriber.
@@ -1515,8 +1839,23 @@ extension Publisher {
     ///   - publisher3: A fourth publisher.
     /// - Returns: A publisher that emits groups of elements from the upstream publishers as tuples.
     public func zip<P, Q, R>(_ publisher1: P, _ publisher2: Q, _ publisher3: R) -> Publishers.Zip4<Self, P, Q, R> where P : Publisher, Q : Publisher, R : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure, Q.Failure == R.Failure
+
+    /// Combine elements from three other publishers and deliver a transformed output.
+    ///
+    /// The returned publisher waits until all four publishers have emitted an event, then delivers the oldest unconsumed event from each publisher as a tuple to the subscriber.
+    /// For example, if publisher `P1` emits elements `a` and `b`, and publisher `P2` emits elements `c` and `d`, and publisher `P3` emits the elements `e` and `f`, and publisher `P4` emits the event `g`, the zip publisher emits the tuple `(a, c, e, g)`. It won’t emit a tuple with elements `b`, `d`, or `f` until `P4` emits another event.
+    /// If any upstream publisher finishes successfuly or fails with an error, the zipped publisher does the same.
+    ///
+    /// - Parameters:
+    ///   - publisher1: A second publisher.
+    ///   - publisher2: A third publisher.
+    ///   - publisher3: A fourth publisher.
+    ///   - transform: A closure that receives the most recent value from each publisher and returns a new value to publish.
+    /// - Returns: A publisher that emits groups of elements from the upstream publishers as tuples.
+    public func zip<P, Q, R, T>(_ publisher1: P, _ publisher2: Q, _ publisher3: R, _ transform: @escaping (Self.Output, P.Output, Q.Output, R.Output) -> T) -> Publishers.Map<Publishers.Zip4<Self, P, Q, R>, T> where P : Publisher, Q : Publisher, R : Publisher, Self.Failure == P.Failure, P.Failure == Q.Failure, Q.Failure == R.Failure
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Publishes a specific element, indicated by its index in the sequence of published elements.
@@ -1535,6 +1874,7 @@ extension Publisher {
     public func output<R>(in range: R) -> Publishers.Output<Self> where R : RangeExpression, R.Bound == Int
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Handles errors from an upstream publisher by replacing it with another publisher.
@@ -1551,15 +1891,22 @@ extension Publisher {
     /// }
     ///
     /// let noErrorPublisher = errorPublisher.catch { _ in
-    ///     return Publishers.Just(100)
+    ///     return Just(100)
     /// }
     /// ```
     /// Backpressure note: This publisher passes through `request` and `cancel` to the upstream. After receiving an error, the publisher sends sends any unfulfilled demand to the new `Publisher`.
     /// - Parameter handler: A closure that accepts the upstream failure as input and returns a publisher to replace the upstream publisher.
     /// - Returns: A publisher that handles errors from an upstream publisher by replacing the failed publisher with another publisher.
     public func `catch`<P>(_ handler: @escaping (Self.Failure) -> P) -> Publishers.Catch<Self, P> where P : Publisher, Self.Output == P.Output
+
+    /// Handles errors from an upstream publisher by either replacing it with another publisher or `throw`ing  a new error.
+    ///
+    /// - Parameter handler: A `throw`ing closure that accepts the upstream failure as input and returns a publisher to replace the upstream publisher or if an error is thrown will send the error downstream.
+    /// - Returns: A publisher that handles errors from an upstream publisher by replacing the failed publisher with another publisher.
+    public func tryCatch<P>(_ handler: @escaping (Self.Failure) throws -> P) -> Publishers.TryCatch<Self, P> where P : Publisher, Self.Output == P.Output
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Transforms all elements from an upstream publisher into a new or existing publisher.
@@ -1575,6 +1922,7 @@ extension Publisher {
     public func flatMap<T, P>(maxPublishers: Subscribers.Demand = .unlimited, _ transform: @escaping (Self.Output) -> P) -> Publishers.FlatMap<P, Self> where T == P.Output, P : Publisher, Self.Failure == P.Failure
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Delays delivery of all output to the downstream receiver by a specified amount of time on a particular scheduler.
@@ -1589,6 +1937,7 @@ extension Publisher {
     public func delay<S>(for interval: S.SchedulerTimeType.Stride, tolerance: S.SchedulerTimeType.Stride? = nil, scheduler: S, options: S.SchedulerOptions? = nil) -> Publishers.Delay<Self, S> where S : Scheduler
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Omits the specified number of elements before republishing subsequent elements.
@@ -1598,11 +1947,13 @@ extension Publisher {
     public func dropFirst(_ count: Int = 1) -> Publishers.Drop<Self>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     public func eraseToAnyPublisher() -> AnyPublisher<Self.Output, Self.Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publisher {
 
     /// Publishes the first element of a stream, then finishes.
@@ -1633,6 +1984,7 @@ extension Publisher {
 public enum Publishers {
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     final public class Multicast<Upstream, SubjectType> : ConnectablePublisher where Upstream : Publisher, SubjectType : Subject, Upstream.Failure == SubjectType.Failure, Upstream.Output == SubjectType.Output {
@@ -1644,6 +1996,12 @@ extension Publishers {
         ///
         /// Use `Never` if this `Publisher` does not publish errors.
         public typealias Failure = Upstream.Failure
+
+        final public let upstream: Upstream
+
+        final public let createSubject: () -> SubjectType
+
+        public init(upstream: Upstream, createSubject: @escaping () -> SubjectType)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -1660,6 +2018,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that receives elements from an upstream publisher on a specific scheduler.
@@ -1682,6 +2041,8 @@ extension Publishers {
         /// Scheduler options that customize the delivery of elements.
         public let options: Context.SchedulerOptions?
 
+        public init(upstream: Upstream, scheduler: Context, options: Context.SchedulerOptions?)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -1692,6 +2053,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that measures and emits the time interval between events received from an upstream publisher.
@@ -1711,6 +2073,8 @@ extension Publishers {
         /// The scheduler on which to deliver elements.
         public let scheduler: Context
 
+        public init(upstream: Upstream, scheduler: Context)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -1721,6 +2085,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that omits elements from an upstream publisher until a given closure returns false.
@@ -1739,6 +2104,8 @@ extension Publishers {
 
         /// The closure that indicates whether to drop the element.
         public let predicate: (Upstream.Output) -> Bool
+
+        public init(upstream: Upstream, predicate: @escaping (Publishers.DropWhile<Upstream>.Output) -> Bool)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -1766,6 +2133,8 @@ extension Publishers {
         /// The error-throwing closure that indicates whether to drop the element.
         public let predicate: (Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, predicate: @escaping (Publishers.TryDropWhile<Upstream>.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -1776,6 +2145,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that republishes all elements that match a provided closure.
@@ -1794,6 +2164,8 @@ extension Publishers {
 
         /// A closure that indicates whether to republish an element.
         public let isIncluded: (Upstream.Output) -> Bool
+
+        public init(upstream: Upstream, isIncluded: @escaping (Upstream.Output) -> Bool)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -1821,6 +2193,8 @@ extension Publishers {
         /// A error-throwing closure that indicates whether to republish an element.
         public let isIncluded: (Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, isIncluded: @escaping (Upstream.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -1831,6 +2205,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that raises a debugger signal when a provided closure needs to stop the process in the debugger.
@@ -1878,6 +2253,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that awaits subscription before running the supplied closure to create a publisher for the new subscriber.
@@ -1911,6 +2287,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes a single Boolean value that indicates whether all received elements pass a given predicate.
@@ -1931,6 +2308,8 @@ extension Publishers {
         ///
         ///  Return `true` to continue, or `false` to cancel the upstream and finish.
         public let predicate: (Upstream.Output) -> Bool
+
+        public init(upstream: Upstream, predicate: @escaping (Upstream.Output) -> Bool)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -1960,6 +2339,8 @@ extension Publishers {
         /// Return `true` to continue, or `false` to cancel the upstream and complete. The closure may throw, in which case the publisher cancels the upstream publisher and fails with the thrown error.
         public let predicate: (Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, predicate: @escaping (Upstream.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -1970,6 +2351,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     public struct RemoveDuplicates<Upstream> : Publisher where Upstream : Publisher {
@@ -1985,6 +2367,8 @@ extension Publishers {
         public let upstream: Upstream
 
         public let predicate: (Upstream.Output, Upstream.Output) -> Bool
+
+        public init(upstream: Upstream, predicate: @escaping (Publishers.RemoveDuplicates<Upstream>.Output, Publishers.RemoveDuplicates<Upstream>.Output) -> Bool)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2009,6 +2393,8 @@ extension Publishers {
 
         public let predicate: (Upstream.Output, Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, predicate: @escaping (Publishers.TryRemoveDuplicates<Upstream>.Output, Publishers.TryRemoveDuplicates<Upstream>.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -2019,6 +2405,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     public struct Decode<Upstream, Output, Coder> : Publisher where Upstream : Publisher, Output : Decodable, Coder : TopLevelDecoder, Upstream.Output == Coder.Input {
@@ -2065,39 +2452,7 @@ extension Publishers {
     }
 }
 
-extension Publishers {
-
-    /// A publisher that emits an output to each subscriber just once, and then finishes.
-    ///
-    /// You can use a `Just` publisher to start a chain of publishers. A `Just` publisher is also useful when replacing a value with `Catch`.
-    ///
-    /// In contrast with `Publishers.Once`, a `Just` publisher cannot fail with an error.
-    /// In contrast with `Publishers.Optional`, a `Just` publisher always produces a value.
-    public struct Just<Output> : Publisher {
-
-        /// The kind of errors this publisher might publish.
-        ///
-        /// Use `Never` if this `Publisher` does not publish errors.
-        public typealias Failure = Never
-
-        /// The one element that the publisher emits.
-        public let output: Output
-
-        /// Initializes a publisher that emits the specified output just once.
-        ///
-        /// - Parameter output: The one element that the publisher emits.
-        public init(_ output: Output)
-
-        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
-        ///
-        /// - SeeAlso: `subscribe(_:)`
-        /// - Parameters:
-        ///     - subscriber: The subscriber to attach to this `Publisher`.
-        ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where Output == S.Input, S : Subscriber, S.Failure == Publishers.Just<Output>.Failure
-    }
-}
-
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that emits a Boolean value when a specified element is received from its upstream publisher.
@@ -2117,6 +2472,8 @@ extension Publishers {
         /// The element to scan for in the upstream publisher.
         public let output: Upstream.Output
 
+        public init(upstream: Upstream, output: Upstream.Output)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -2127,10 +2484,14 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that receives and combines the latest elements from two publishers.
-    public struct CombineLatest<A, B, Output> : Publisher where A : Publisher, B : Publisher, A.Failure == B.Failure {
+    public struct CombineLatest<A, B> : Publisher where A : Publisher, B : Publisher, A.Failure == B.Failure {
+
+        /// The kind of values published by this publisher.
+        public typealias Output = (A.Output, B.Output)
 
         /// The kind of errors this publisher might publish.
         ///
@@ -2141,7 +2502,7 @@ extension Publishers {
 
         public let b: B
 
-        public let transform: (A.Output, B.Output) -> Output
+        public init(_ a: A, _ b: B)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2149,11 +2510,14 @@ extension Publishers {
         /// - Parameters:
         ///     - subscriber: The subscriber to attach to this `Publisher`.
         ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where Output == S.Input, S : Subscriber, B.Failure == S.Failure
+        public func receive<S>(subscriber: S) where S : Subscriber, B.Failure == S.Failure, S.Input == (A.Output, B.Output)
     }
 
     /// A publisher that receives and combines the latest elements from three publishers.
-    public struct CombineLatest3<A, B, C, Output> : Publisher where A : Publisher, B : Publisher, C : Publisher, A.Failure == B.Failure, B.Failure == C.Failure {
+    public struct CombineLatest3<A, B, C> : Publisher where A : Publisher, B : Publisher, C : Publisher, A.Failure == B.Failure, B.Failure == C.Failure {
+
+        /// The kind of values published by this publisher.
+        public typealias Output = (A.Output, B.Output, C.Output)
 
         /// The kind of errors this publisher might publish.
         ///
@@ -2166,7 +2530,7 @@ extension Publishers {
 
         public let c: C
 
-        public let transform: (A.Output, B.Output, C.Output) -> Output
+        public init(_ a: A, _ b: B, _ c: C)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2174,11 +2538,14 @@ extension Publishers {
         /// - Parameters:
         ///     - subscriber: The subscriber to attach to this `Publisher`.
         ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where Output == S.Input, S : Subscriber, C.Failure == S.Failure
+        public func receive<S>(subscriber: S) where S : Subscriber, C.Failure == S.Failure, S.Input == (A.Output, B.Output, C.Output)
     }
 
     /// A publisher that receives and combines the latest elements from four publishers.
-    public struct CombineLatest4<A, B, C, D, Output> : Publisher where A : Publisher, B : Publisher, C : Publisher, D : Publisher, A.Failure == B.Failure, B.Failure == C.Failure, C.Failure == D.Failure {
+    public struct CombineLatest4<A, B, C, D> : Publisher where A : Publisher, B : Publisher, C : Publisher, D : Publisher, A.Failure == B.Failure, B.Failure == C.Failure, C.Failure == D.Failure {
+
+        /// The kind of values published by this publisher.
+        public typealias Output = (A.Output, B.Output, C.Output, D.Output)
 
         /// The kind of errors this publisher might publish.
         ///
@@ -2193,7 +2560,7 @@ extension Publishers {
 
         public let d: D
 
-        public let transform: (A.Output, B.Output, C.Output, D.Output) -> Output
+        public init(_ a: A, _ b: B, _ c: C, _ d: D)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2201,85 +2568,11 @@ extension Publishers {
         /// - Parameters:
         ///     - subscriber: The subscriber to attach to this `Publisher`.
         ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where Output == S.Input, S : Subscriber, D.Failure == S.Failure
-    }
-
-    /// A publisher that receives and combines the latest elements from two publishers, using a throwing closure.
-    public struct TryCombineLatest<A, B, Output> : Publisher where A : Publisher, B : Publisher, A.Failure == Error, B.Failure == Error {
-
-        /// The kind of errors this publisher might publish.
-        ///
-        /// Use `Never` if this `Publisher` does not publish errors.
-        public typealias Failure = Error
-
-        public let a: A
-
-        public let b: B
-
-        public let transform: (A.Output, B.Output) throws -> Output
-
-        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
-        ///
-        /// - SeeAlso: `subscribe(_:)`
-        /// - Parameters:
-        ///     - subscriber: The subscriber to attach to this `Publisher`.
-        ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where Output == S.Input, S : Subscriber, S.Failure == Publishers.TryCombineLatest<A, B, Output>.Failure
-    }
-
-    /// A publisher that receives and combines the latest elements from three publishers, using a throwing closure.
-    public struct TryCombineLatest3<A, B, C, Output> : Publisher where A : Publisher, B : Publisher, C : Publisher, A.Failure == Error, B.Failure == Error, C.Failure == Error {
-
-        /// The kind of errors this publisher might publish.
-        ///
-        /// Use `Never` if this `Publisher` does not publish errors.
-        public typealias Failure = Error
-
-        public let a: A
-
-        public let b: B
-
-        public let c: C
-
-        public let transform: (A.Output, B.Output, C.Output) throws -> Output
-
-        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
-        ///
-        /// - SeeAlso: `subscribe(_:)`
-        /// - Parameters:
-        ///     - subscriber: The subscriber to attach to this `Publisher`.
-        ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where Output == S.Input, S : Subscriber, S.Failure == Publishers.TryCombineLatest3<A, B, C, Output>.Failure
-    }
-
-    /// A publisher that receives and combines the latest elements from four publishers, using a throwing closure.
-    public struct TryCombineLatest4<A, B, C, D, Output> : Publisher where A : Publisher, B : Publisher, C : Publisher, D : Publisher, A.Failure == Error, B.Failure == Error, C.Failure == Error, D.Failure == Error {
-
-        /// The kind of errors this publisher might publish.
-        ///
-        /// Use `Never` if this `Publisher` does not publish errors.
-        public typealias Failure = Error
-
-        public let a: A
-
-        public let b: B
-
-        public let c: C
-
-        public let d: D
-
-        public let transform: (A.Output, B.Output, C.Output, D.Output) throws -> Output
-
-        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
-        ///
-        /// - SeeAlso: `subscribe(_:)`
-        /// - Parameters:
-        ///     - subscriber: The subscriber to attach to this `Publisher`.
-        ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where Output == S.Input, S : Subscriber, S.Failure == Publishers.TryCombineLatest4<A, B, C, D, Output>.Failure
+        public func receive<S>(subscriber: S) where S : Subscriber, D.Failure == S.Failure, S.Input == (A.Output, B.Output, C.Output, D.Output)
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that automatically connects and disconnects from this connectable publisher.
@@ -2296,7 +2589,7 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         final public let upstream: Upstream
 
-        public init(_ upstream: Upstream)
+        public init(upstream: Upstream)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2308,6 +2601,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that prints log messages for all publishing events, optionally prefixed with a given string.
@@ -2353,6 +2647,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that republishes elements while a predicate closure indicates publishing should continue.
@@ -2371,6 +2666,8 @@ extension Publishers {
 
         /// The closure that determines whether whether publishing should continue.
         public let predicate: (Upstream.Output) -> Bool
+
+        public init(upstream: Upstream, predicate: @escaping (Publishers.PrefixWhile<Upstream>.Output) -> Bool)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2398,6 +2695,8 @@ extension Publishers {
         /// The error-throwing closure that determines whether publishing should continue.
         public let predicate: (Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, predicate: @escaping (Publishers.TryPrefixWhile<Upstream>.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -2408,23 +2707,7 @@ extension Publishers {
     }
 }
 
-extension Publishers {
-
-    /// A publisher that eventually produces one value and then finishes or fails.
-    final public class Future<Output, Failure> : Publisher where Failure : Error {
-
-        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
-        ///
-        /// - SeeAlso: `subscribe(_:)`
-        /// - Parameters:
-        ///     - subscriber: The subscriber to attach to this `Publisher`.
-        ///                   once attached it can begin to receive values.
-        final public func receive<S>(subscriber: S) where Output == S.Input, Failure == S.Failure, S : Subscriber
-
-        public init(_ attemptToFulfill: @escaping (@escaping (Result<Output, Failure>) -> Void) -> Void)
-    }
-}
-
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that never publishes any values, and optionally finishes immediately.
@@ -2471,6 +2754,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that appears to send a specified failure type.
@@ -2501,6 +2785,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that emits a Boolean value upon receiving an element that satisfies the predicate closure.
@@ -2519,6 +2804,8 @@ extension Publishers {
 
         /// The closure that determines whether the publisher should consider an element as a match.
         public let predicate: (Upstream.Output) -> Bool
+
+        public init(upstream: Upstream, predicate: @escaping (Upstream.Output) -> Bool)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2546,6 +2833,8 @@ extension Publishers {
         /// The error-throwing closure that determines whether this publisher should emit a `true` element.
         public let predicate: (Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, predicate: @escaping (Upstream.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -2556,6 +2845,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     public struct MakeConnectable<Upstream> : ConnectablePublisher where Upstream : Publisher {
@@ -2567,6 +2857,8 @@ extension Publishers {
         ///
         /// Use `Never` if this `Publisher` does not publish errors.
         public typealias Failure = Upstream.Failure
+
+        public init(upstream: Upstream)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2583,6 +2875,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A strategy for collecting received elements.
@@ -2616,6 +2909,8 @@ extension Publishers {
         /// `Scheduler` options to use for the strategy.
         public let options: Context.SchedulerOptions?
 
+        public init(upstream: Upstream, strategy: Publishers.TimeGroupingStrategy<Context>, options: Context.SchedulerOptions?)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -2638,6 +2933,8 @@ extension Publishers {
 
         /// The publisher that this publisher receives elements from.
         public let upstream: Upstream
+
+        public init(upstream: Upstream)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2665,6 +2962,8 @@ extension Publishers {
         ///  The maximum number of received elements to buffer before publishing.
         public let count: Int
 
+        public init(upstream: Upstream, count: Int)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -2675,6 +2974,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes an optional value to each subscriber exactly once, if the optional has a value.
@@ -2707,6 +3007,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that delivers elements to its downstream subscriber on a specific scheduler.
@@ -2729,6 +3030,8 @@ extension Publishers {
         /// Scheduler options that customize the delivery of elements.
         public let options: Context.SchedulerOptions?
 
+        public init(upstream: Upstream, scheduler: Context, options: Context.SchedulerOptions?)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -2739,6 +3042,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     public struct PrefixUntilOutput<Upstream, Other> : Publisher where Upstream : Publisher, Other : Publisher {
@@ -2769,6 +3073,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that applies a closure to all received elements and produces an accumulated value when the upstream publisher finishes.
@@ -2787,6 +3092,8 @@ extension Publishers {
 
         /// A closure that takes the previously-accumulated value and the next element from the upstream publisher to produce a new value.
         public let nextPartialResult: (Output, Upstream.Output) -> Output
+
+        public init(upstream: Upstream, initial: Output, nextPartialResult: @escaping (Output, Upstream.Output) -> Output)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2816,6 +3123,8 @@ extension Publishers {
         /// If this closure throws an error, the publisher fails and passes the error to its subscriber.
         public let nextPartialResult: (Output, Upstream.Output) throws -> Output
 
+        public init(upstream: Upstream, initial: Output, nextPartialResult: @escaping (Output, Upstream.Output) throws -> Output)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -2826,6 +3135,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that republishes all non-`nil` results of calling a closure with each received element.
@@ -2841,6 +3151,8 @@ extension Publishers {
 
         /// A closure that receives values from the upstream publisher and returns optional values.
         public let transform: (Upstream.Output) -> Output?
+
+        public init(upstream: Upstream, transform: @escaping (Upstream.Output) -> Output?)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2862,10 +3174,12 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
-        /// an error-throwing closure that receives values from the upstream publisher and returns optional values.
+        /// An error-throwing closure that receives values from the upstream publisher and returns optional values.
         ///
         /// If this closure throws an error, the publisher fails.
         public let transform: (Upstream.Output) throws -> Output?
+
+        public init(upstream: Upstream, transform: @escaping (Upstream.Output) throws -> Output?)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -2877,6 +3191,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher created by applying the merge function to two upstream publishers.
@@ -3173,6 +3488,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes an output to each subscriber exactly once then finishes, or fails immediately without producing any elements.
@@ -3212,6 +3528,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     public struct Scan<Upstream, Output> : Publisher where Upstream : Publisher {
@@ -3223,9 +3540,11 @@ extension Publishers {
 
         public let upstream: Upstream
 
+        public let initialResult: Output
+
         public let nextPartialResult: (Output, Upstream.Output) -> Output
 
-        public let initialResult: Output
+        public init(upstream: Upstream, initialResult: Output, nextPartialResult: @escaping (Output, Upstream.Output) -> Output)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -3245,9 +3564,11 @@ extension Publishers {
 
         public let upstream: Upstream
 
+        public let initialResult: Output
+
         public let nextPartialResult: (Output, Upstream.Output) throws -> Output
 
-        public let initialResult: Output
+        public init(upstream: Upstream, initialResult: Output, nextPartialResult: @escaping (Output, Upstream.Output) throws -> Output)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -3259,6 +3580,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes the number of elements received from the upstream publisher.
@@ -3275,6 +3597,8 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
+        public init(upstream: Upstream)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3285,6 +3609,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that only publishes the last element of a stream that satisfies a predicate closure, once the stream finishes.
@@ -3303,6 +3628,8 @@ extension Publishers {
 
         /// The closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) -> Bool
+
+        public init(upstream: Upstream, predicate: @escaping (Publishers.LastWhere<Upstream>.Output) -> Bool)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -3330,6 +3657,8 @@ extension Publishers {
         /// The error-throwing closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, predicate: @escaping (Publishers.TryLastWhere<Upstream>.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3340,6 +3669,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that ignores all upstream elements, but passes along a completion state (finish or failed).
@@ -3356,6 +3686,8 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
+        public init(upstream: Upstream)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3366,6 +3698,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that “flattens” nested publishers.
@@ -3400,6 +3733,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that attempts to recreate its subscription to a failed upstream publisher.
@@ -3438,6 +3772,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that converts any failure from the upstream publisher into a new error.
@@ -3452,6 +3787,8 @@ extension Publishers {
         /// The closure that converts the upstream failure into a new error.
         public let transform: (Upstream.Failure) -> Failure
 
+        public init(upstream: Upstream, transform: @escaping (Upstream.Failure) -> Failure)
+
         public init(upstream: Upstream, _ map: @escaping (Upstream.Failure) -> Failure)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
@@ -3464,6 +3801,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes either the most-recent or first element published by the upstream publisher in a specified time interval.
@@ -3491,6 +3829,8 @@ extension Publishers {
         /// If `false`, the publisher emits the first element received during the interval.
         public let latest: Bool
 
+        public init(upstream: Upstream, interval: Context.SchedulerTimeType.Stride, scheduler: Context, latest: Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3501,6 +3841,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher implemented as a class, which otherwise behaves like its upstream publisher.
@@ -3513,6 +3854,10 @@ extension Publishers {
         ///
         /// Use `Never` if this `Publisher` does not publish errors.
         public typealias Failure = Upstream.Failure
+
+        final public let upstream: Upstream
+
+        public init(upstream: Upstream)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -3534,6 +3879,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that republishes items from another publisher only if each new item is in increasing order from the previously-published item.
@@ -3552,6 +3898,8 @@ extension Publishers {
 
         /// A closure that receives two elements and returns `true` if they are in increasing order.
         public let areInIncreasingOrder: (Upstream.Output, Upstream.Output) -> Bool
+
+        public init(upstream: Upstream, areInIncreasingOrder: @escaping (Upstream.Output, Upstream.Output) -> Bool)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -3579,6 +3927,8 @@ extension Publishers {
         /// A closure that receives two elements and returns `true` if they are in increasing order.
         public let areInIncreasingOrder: (Upstream.Output, Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, areInIncreasingOrder: @escaping (Upstream.Output, Upstream.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3589,6 +3939,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that replaces an empty stream with a provided element.
@@ -3648,11 +3999,12 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that raises a fatal error upon receiving any failure, and otherwise republishes all received input.
     ///
-    /// Use this function for internal sanity checks that are active during testing but do not impact performance of shipping code. 
+    /// Use this function for internal sanity checks that are active during testing but do not impact performance of shipping code.
     public struct AssertNoFailure<Upstream> : Publisher where Upstream : Publisher {
 
         /// The kind of values published by this publisher.
@@ -3675,6 +4027,8 @@ extension Publishers {
         /// The line number used in the error message.
         public let line: UInt
 
+        public init(upstream: Upstream, prefix: String, file: StaticString, line: UInt)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3685,6 +4039,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that ignores elements from the upstream publisher until it receives an element from second publisher.
@@ -3721,6 +4076,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that performs the specified closures when publisher events occur.
@@ -3752,6 +4108,8 @@ extension Publishers {
         /// A closure that executes when the publisher receives a request for more elements.
         public var receiveRequest: ((Subscribers.Demand) -> Void)?
 
+        public init(upstream: Upstream, receiveSubscription: ((Subscription) -> Void)? = nil, receiveOutput: ((Publishers.HandleEvents<Upstream>.Output) -> Void)? = nil, receiveCompletion: ((Subscribers.Completion<Publishers.HandleEvents<Upstream>.Failure>) -> Void)? = nil, receiveCancel: (() -> Void)? = nil, receiveRequest: ((Subscribers.Demand) -> Void)?)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3762,6 +4120,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that emits all of one publisher’s elements before those from another publisher.
@@ -3793,6 +4152,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes elements only after a specified time interval elapses between events.
@@ -3818,6 +4178,8 @@ extension Publishers {
         /// Scheduler options that customize this publisher’s delivery of elements.
         public let options: Context.SchedulerOptions?
 
+        public init(upstream: Upstream, dueTime: Context.SchedulerTimeType.Stride, scheduler: Context, options: Context.SchedulerOptions?)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3828,6 +4190,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that immediately terminates with the specified error.
@@ -3859,6 +4222,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that only publishes the last element of a stream, after the stream finishes.
@@ -3875,6 +4239,8 @@ extension Publishers {
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
 
+        public init(upstream: Upstream)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3885,6 +4251,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that transforms all elements from the upstream publisher with a provided closure.
@@ -3900,6 +4267,8 @@ extension Publishers {
 
         /// The closure that transforms elements from the upstream publisher.
         public let transform: (Upstream.Output) -> Output
+
+        public init(upstream: Upstream, transform: @escaping (Upstream.Output) -> Output)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -3924,6 +4293,8 @@ extension Publishers {
         /// The error-throwing closure that transforms elements from the upstream publisher.
         public let transform: (Upstream.Output) throws -> Output
 
+        public init(upstream: Upstream, transform: @escaping (Upstream.Output) throws -> Output)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3934,6 +4305,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     public struct Timeout<Upstream, Context> : Publisher where Upstream : Publisher, Context : Scheduler {
@@ -3956,6 +4328,8 @@ extension Publishers {
 
         public let customError: (() -> Upstream.Failure)?
 
+        public init(upstream: Upstream, interval: Context.SchedulerTimeType.Stride, scheduler: Context, options: Context.SchedulerOptions?, customError: (() -> Publishers.Timeout<Upstream, Context>.Failure)?)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -3966,6 +4340,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     public enum PrefetchStrategy {
@@ -4036,6 +4411,8 @@ extension Publishers {
 
         public let whenFull: Publishers.BufferingStrategy<Upstream.Failure>
 
+        public init(upstream: Upstream, size: Int, prefetch: Publishers.PrefetchStrategy, whenFull: Publishers.BufferingStrategy<Publishers.Buffer<Upstream>.Failure>)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -4046,6 +4423,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes a given sequence of elements.
@@ -4074,6 +4452,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher created by applying the zip function to two upstream publishers.
@@ -4161,6 +4540,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes elements specified by a range in the sequence of published elements.
@@ -4197,6 +4577,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that handles errors from an upstream publisher by replacing the failed publisher with another publisher.
@@ -4231,14 +4612,41 @@ extension Publishers {
         ///                   once attached it can begin to receive values.
         public func receive<S>(subscriber: S) where S : Subscriber, NewPublisher.Failure == S.Failure, NewPublisher.Output == S.Input
     }
-}
 
-extension Publishers {
-
-    public struct FlatMap<P, Upstream> : Publisher where P : Publisher, Upstream : Publisher, P.Failure == Upstream.Failure {
+    /// A publisher that handles errors from an upstream publisher by replacing the failed publisher with another publisher or optionally producing a new error.
+    public struct TryCatch<Upstream, NewPublisher> : Publisher where Upstream : Publisher, NewPublisher : Publisher, Upstream.Output == NewPublisher.Output {
 
         /// The kind of values published by this publisher.
-        public typealias Output = P.Output
+        public typealias Output = Upstream.Output
+
+        /// The kind of errors this publisher might publish.
+        ///
+        /// Use `Never` if this `Publisher` does not publish errors.
+        public typealias Failure = Error
+
+        public let upstream: Upstream
+
+        public let handler: (Upstream.Failure) throws -> NewPublisher
+
+        public init(upstream: Upstream, handler: @escaping (Upstream.Failure) throws -> NewPublisher)
+
+        /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
+        ///
+        /// - SeeAlso: `subscribe(_:)`
+        /// - Parameters:
+        ///     - subscriber: The subscriber to attach to this `Publisher`.
+        ///                   once attached it can begin to receive values.
+        public func receive<S>(subscriber: S) where S : Subscriber, NewPublisher.Output == S.Input, S.Failure == Publishers.TryCatch<Upstream, NewPublisher>.Failure
+    }
+}
+
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Publishers {
+
+    public struct FlatMap<NewPublisher, Upstream> : Publisher where NewPublisher : Publisher, Upstream : Publisher, NewPublisher.Failure == Upstream.Failure {
+
+        /// The kind of values published by this publisher.
+        public typealias Output = NewPublisher.Output
 
         /// The kind of errors this publisher might publish.
         ///
@@ -4249,7 +4657,9 @@ extension Publishers {
 
         public let maxPublishers: Subscribers.Demand
 
-        public let transform: (Upstream.Output) -> P
+        public let transform: (Upstream.Output) -> NewPublisher
+
+        public init(upstream: Upstream, maxPublishers: Subscribers.Demand, transform: @escaping (Upstream.Output) -> NewPublisher)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -4257,10 +4667,11 @@ extension Publishers {
         /// - Parameters:
         ///     - subscriber: The subscriber to attach to this `Publisher`.
         ///                   once attached it can begin to receive values.
-        public func receive<S>(subscriber: S) where S : Subscriber, P.Output == S.Input, Upstream.Failure == S.Failure
+        public func receive<S>(subscriber: S) where S : Subscriber, NewPublisher.Output == S.Input, Upstream.Failure == S.Failure
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that delays delivery of elements and completion to the downstream receiver.
@@ -4286,6 +4697,8 @@ extension Publishers {
         /// The scheduler to deliver the delayed events.
         public let scheduler: Context
 
+        public init(upstream: Upstream, interval: Context.SchedulerTimeType.Stride, tolerance: Context.SchedulerTimeType.Stride, scheduler: Context)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -4296,6 +4709,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that omits a specified number of elements before republishing later elements.
@@ -4327,6 +4741,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers {
 
     /// A publisher that publishes the first element of a stream, then finishes.
@@ -4342,6 +4757,8 @@ extension Publishers {
 
         /// The publisher from which this publisher receives elements.
         public let upstream: Upstream
+
+        public init(upstream: Upstream)
 
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
@@ -4369,6 +4786,8 @@ extension Publishers {
         /// The closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) -> Bool
 
+        public init(upstream: Upstream, predicate: @escaping (Publishers.FirstWhere<Upstream>.Output) -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -4395,6 +4814,8 @@ extension Publishers {
         /// The error-throwing closure that determines whether to publish an element.
         public let predicate: (Upstream.Output) throws -> Bool
 
+        public init(upstream: Upstream, predicate: @escaping (Publishers.TryFirstWhere<Upstream>.Output) throws -> Bool)
+
         /// This function is called to attach the specified `Subscriber` to this `Publisher` by `subscribe(_:)`
         ///
         /// - SeeAlso: `subscribe(_:)`
@@ -4405,6 +4826,7 @@ extension Publishers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Filter {
 
     public func filter(_ isIncluded: @escaping (Publishers.Filter<Upstream>.Output) -> Bool) -> Publishers.Filter<Upstream>
@@ -4412,6 +4834,7 @@ extension Publishers.Filter {
     public func tryFilter(_ isIncluded: @escaping (Publishers.Filter<Upstream>.Output) throws -> Bool) -> Publishers.TryFilter<Upstream>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.TryFilter {
 
     public func filter(_ isIncluded: @escaping (Publishers.TryFilter<Upstream>.Output) -> Bool) -> Publishers.TryFilter<Upstream>
@@ -4419,130 +4842,7 @@ extension Publishers.TryFilter {
     public func tryFilter(_ isIncluded: @escaping (Publishers.TryFilter<Upstream>.Output) throws -> Bool) -> Publishers.TryFilter<Upstream>
 }
 
-extension Publishers.Just : Equatable where Output : Equatable {
-
-    /// Returns a Boolean value indicating whether two values are equal.
-    ///
-    /// Equality is the inverse of inequality. For any values `a` and `b`,
-    /// `a == b` implies that `a != b` is `false`.
-    ///
-    /// - Parameters:
-    ///   - lhs: A value to compare.
-    ///   - rhs: Another value to compare.
-    public static func == (lhs: Publishers.Just<Output>, rhs: Publishers.Just<Output>) -> Bool
-}
-
-extension Publishers.Just where Output : Comparable {
-
-    public func min() -> Publishers.Just<Output>
-
-    public func max() -> Publishers.Just<Output>
-}
-
-extension Publishers.Just where Output : Equatable {
-
-    public func contains(_ output: Output) -> Publishers.Just<Bool>
-
-    public func removeDuplicates() -> Publishers.Just<Output>
-}
-
-extension Publishers.Just {
-
-    public func allSatisfy(_ predicate: (Output) -> Bool) -> Publishers.Just<Bool>
-
-    public func tryAllSatisfy(_ predicate: (Output) throws -> Bool) -> Publishers.Once<Bool, Error>
-
-    public func collect() -> Publishers.Just<[Output]>
-
-    public func compactMap<T>(_ transform: (Output) -> T?) -> Publishers.Optional<T, Publishers.Just<Output>.Failure>
-
-    public func tryCompactMap<T>(_ transform: (Output) throws -> T?) -> Publishers.Optional<T, Error>
-
-    public func min(by areInIncreasingOrder: (Output, Output) -> Bool) -> Publishers.Just<Output>
-
-    public func tryMin(by areInIncreasingOrder: (Output, Output) throws -> Bool) -> Publishers.Just<Output>
-
-    public func max(by areInIncreasingOrder: (Output, Output) -> Bool) -> Publishers.Just<Output>
-
-    public func tryMax(by areInIncreasingOrder: (Output, Output) throws -> Bool) -> Publishers.Just<Output>
-
-    public func prepend(_ elements: Output...) -> Publishers.Sequence<[Output], Publishers.Just<Output>.Failure>
-
-    public func prepend<S>(_ elements: S) -> Publishers.Sequence<[Output], Publishers.Just<Output>.Failure> where Output == S.Element, S : Sequence
-
-    public func append(_ elements: Output...) -> Publishers.Sequence<[Output], Publishers.Just<Output>.Failure>
-
-    public func append<S>(_ elements: S) -> Publishers.Sequence<[Output], Publishers.Just<Output>.Failure> where Output == S.Element, S : Sequence
-
-    public func contains(where predicate: (Output) -> Bool) -> Publishers.Just<Bool>
-
-    public func tryContains(where predicate: (Output) throws -> Bool) -> Publishers.Once<Bool, Error>
-
-    public func count() -> Publishers.Just<Int>
-
-    public func dropFirst(_ count: Int = 1) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure>
-
-    public func drop(while predicate: (Output) -> Bool) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure>
-
-    public func tryDrop(while predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
-
-    public func first() -> Publishers.Just<Output>
-
-    public func first(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure>
-
-    public func tryFirst(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
-
-    public func last() -> Publishers.Just<Output>
-
-    public func last(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure>
-
-    public func tryLast(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
-
-    public func filter(_ isIncluded: (Output) -> Bool) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure>
-
-    public func tryFilter(_ isIncluded: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
-
-    public func ignoreOutput() -> Publishers.Empty<Output, Publishers.Just<Output>.Failure>
-
-    public func map<T>(_ transform: (Output) -> T) -> Publishers.Just<T>
-
-    public func tryMap<T>(_ transform: (Output) throws -> T) -> Publishers.Once<T, Error>
-
-    public func mapError<E>(_ transform: (Publishers.Just<Output>.Failure) -> E) -> Publishers.Once<Output, E> where E : Error
-
-    public func output(at index: Int) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure>
-
-    public func output<R>(in range: R) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure> where R : RangeExpression, R.Bound == Int
-
-    public func prefix(_ maxLength: Int) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure>
-
-    public func prefix(while predicate: (Output) -> Bool) -> Publishers.Optional<Output, Publishers.Just<Output>.Failure>
-
-    public func tryPrefix(while predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error>
-
-    public func reduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Publishers.Once<T, Publishers.Just<Output>.Failure>
-
-    public func tryReduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Publishers.Once<T, Error>
-
-    public func removeDuplicates(by predicate: (Output, Output) -> Bool) -> Publishers.Just<Output>
-
-    public func tryRemoveDuplicates(by predicate: (Output, Output) throws -> Bool) -> Publishers.Once<Output, Error>
-
-    public func replaceError(with output: Output) -> Publishers.Just<Output>
-
-    public func replaceEmpty(with output: Output) -> Publishers.Just<Output>
-
-    public func retry(_ times: Int) -> Publishers.Just<Output>
-
-    public func retry() -> Publishers.Just<Output>
-
-    public func scan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Publishers.Once<T, Publishers.Just<Output>.Failure>
-
-    public func tryScan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Publishers.Once<T, Error>
-
-    public func setFailureType<E>(to failureType: E.Type) -> Publishers.Once<Output, E> where E : Error
-}
-
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Contains : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4554,6 +4854,59 @@ extension Publishers.Contains : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.Contains<Upstream>, rhs: Publishers.Contains<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Publishers.CombineLatest : Equatable where A : Equatable, B : Equatable {
+
+    /// Returns a Boolean value that indicates whether two publishers are equivalent.
+    ///
+    /// - Parameters:
+    ///   - lhs: A combineLatest publisher to compare for equality.
+    ///   - rhs: Another combineLatest publisher to compare for equality.
+    /// - Returns: `true` if the corresponding upstream publishers of each combineLatest publisher are equal, `false` otherwise.
+    public static func == (lhs: Publishers.CombineLatest<A, B>, rhs: Publishers.CombineLatest<A, B>) -> Bool
+}
+
+/// Returns a Boolean value that indicates whether two publishers are equivalent.
+///
+/// - Parameters:
+///   - lhs: A combineLatest publisher to compare for equality.
+///   - rhs: Another combineLatest publisher to compare for equality.
+/// - Returns: `true` if the corresponding upstream publishers of each combineLatest publisher are equal, `false` otherwise.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Publishers.CombineLatest3 : Equatable where A : Equatable, B : Equatable, C : Equatable {
+
+    /// Returns a Boolean value indicating whether two values are equal.
+    ///
+    /// Equality is the inverse of inequality. For any values `a` and `b`,
+    /// `a == b` implies that `a != b` is `false`.
+    ///
+    /// - Parameters:
+    ///   - lhs: A value to compare.
+    ///   - rhs: Another value to compare.
+    public static func == (lhs: Publishers.CombineLatest3<A, B, C>, rhs: Publishers.CombineLatest3<A, B, C>) -> Bool
+}
+
+/// Returns a Boolean value that indicates whether two publishers are equivalent.
+///
+/// - Parameters:
+///   - lhs: A combineLatest publisher to compare for equality.
+///   - rhs: Another combineLatest publisher to compare for equality.
+/// - Returns: `true` if the corresponding upstream publishers of each combineLatest publisher are equal, `false` otherwise.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Publishers.CombineLatest4 : Equatable where A : Equatable, B : Equatable, C : Equatable, D : Equatable {
+
+    /// Returns a Boolean value indicating whether two values are equal.
+    ///
+    /// Equality is the inverse of inequality. For any values `a` and `b`,
+    /// `a == b` implies that `a != b` is `false`.
+    ///
+    /// - Parameters:
+    ///   - lhs: A value to compare.
+    ///   - rhs: Another value to compare.
+    public static func == (lhs: Publishers.CombineLatest4<A, B, C, D>, rhs: Publishers.CombineLatest4<A, B, C, D>) -> Bool
+}
+
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.SetFailureType : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -4567,6 +4920,7 @@ extension Publishers.SetFailureType : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.SetFailureType<Upstream, Failure>, rhs: Publishers.SetFailureType<Upstream, Failure>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Collect : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -4580,6 +4934,7 @@ extension Publishers.Collect : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.Collect<Upstream>, rhs: Publishers.Collect<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.CollectByCount : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -4593,6 +4948,7 @@ extension Publishers.CollectByCount : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.CollectByCount<Upstream>, rhs: Publishers.CollectByCount<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Optional : Equatable where Output : Equatable, Failure : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -4606,6 +4962,7 @@ extension Publishers.Optional : Equatable where Output : Equatable, Failure : Eq
     public static func == (lhs: Publishers.Optional<Output, Failure>, rhs: Publishers.Optional<Output, Failure>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Optional where Output : Equatable {
 
     public func contains(_ output: Output) -> Publishers.Optional<Bool, Failure>
@@ -4613,6 +4970,7 @@ extension Publishers.Optional where Output : Equatable {
     public func removeDuplicates() -> Publishers.Optional<Output, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Optional where Output : Comparable {
 
     public func min() -> Publishers.Optional<Output, Failure>
@@ -4620,6 +4978,7 @@ extension Publishers.Optional where Output : Comparable {
     public func max() -> Publishers.Optional<Output, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Optional {
 
     public func allSatisfy(_ predicate: (Output) -> Bool) -> Publishers.Optional<Bool, Failure>
@@ -4707,11 +5066,13 @@ extension Publishers.Optional {
     public func tryScan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Publishers.Optional<T, Error>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Optional where Failure == Never {
 
     public func setFailureType<E>(to failureType: E.Type) -> Publishers.Optional<Output, E> where E : Error
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.CompactMap {
 
     public func compactMap<T>(_ transform: @escaping (Output) -> T?) -> Publishers.CompactMap<Upstream, T>
@@ -4719,11 +5080,13 @@ extension Publishers.CompactMap {
     public func map<T>(_ transform: @escaping (Output) -> T) -> Publishers.CompactMap<Upstream, T>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.TryCompactMap {
 
     public func compactMap<T>(_ transform: @escaping (Output) throws -> T?) -> Publishers.TryCompactMap<Upstream, T>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Merge : Equatable where A : Equatable, B : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4735,6 +5098,7 @@ extension Publishers.Merge : Equatable where A : Equatable, B : Equatable {
     public static func == (lhs: Publishers.Merge<A, B>, rhs: Publishers.Merge<A, B>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Merge3 : Equatable where A : Equatable, B : Equatable, C : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4746,6 +5110,7 @@ extension Publishers.Merge3 : Equatable where A : Equatable, B : Equatable, C : 
     public static func == (lhs: Publishers.Merge3<A, B, C>, rhs: Publishers.Merge3<A, B, C>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Merge4 : Equatable where A : Equatable, B : Equatable, C : Equatable, D : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4757,6 +5122,7 @@ extension Publishers.Merge4 : Equatable where A : Equatable, B : Equatable, C : 
     public static func == (lhs: Publishers.Merge4<A, B, C, D>, rhs: Publishers.Merge4<A, B, C, D>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Merge5 : Equatable where A : Equatable, B : Equatable, C : Equatable, D : Equatable, E : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4768,6 +5134,7 @@ extension Publishers.Merge5 : Equatable where A : Equatable, B : Equatable, C : 
     public static func == (lhs: Publishers.Merge5<A, B, C, D, E>, rhs: Publishers.Merge5<A, B, C, D, E>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Merge6 : Equatable where A : Equatable, B : Equatable, C : Equatable, D : Equatable, E : Equatable, F : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4779,6 +5146,7 @@ extension Publishers.Merge6 : Equatable where A : Equatable, B : Equatable, C : 
     public static func == (lhs: Publishers.Merge6<A, B, C, D, E, F>, rhs: Publishers.Merge6<A, B, C, D, E, F>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Merge7 : Equatable where A : Equatable, B : Equatable, C : Equatable, D : Equatable, E : Equatable, F : Equatable, G : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4790,6 +5158,7 @@ extension Publishers.Merge7 : Equatable where A : Equatable, B : Equatable, C : 
     public static func == (lhs: Publishers.Merge7<A, B, C, D, E, F, G>, rhs: Publishers.Merge7<A, B, C, D, E, F, G>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Merge8 : Equatable where A : Equatable, B : Equatable, C : Equatable, D : Equatable, E : Equatable, F : Equatable, G : Equatable, H : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4801,6 +5170,7 @@ extension Publishers.Merge8 : Equatable where A : Equatable, B : Equatable, C : 
     public static func == (lhs: Publishers.Merge8<A, B, C, D, E, F, G, H>, rhs: Publishers.Merge8<A, B, C, D, E, F, G, H>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.MergeMany : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -4814,6 +5184,7 @@ extension Publishers.MergeMany : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.MergeMany<Upstream>, rhs: Publishers.MergeMany<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Once : Equatable where Output : Equatable, Failure : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -4827,6 +5198,7 @@ extension Publishers.Once : Equatable where Output : Equatable, Failure : Equata
     public static func == (lhs: Publishers.Once<Output, Failure>, rhs: Publishers.Once<Output, Failure>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Once where Output : Equatable {
 
     public func contains(_ output: Output) -> Publishers.Once<Bool, Failure>
@@ -4834,6 +5206,7 @@ extension Publishers.Once where Output : Equatable {
     public func removeDuplicates() -> Publishers.Once<Output, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Once where Output : Comparable {
 
     public func min() -> Publishers.Once<Output, Failure>
@@ -4841,6 +5214,7 @@ extension Publishers.Once where Output : Comparable {
     public func max() -> Publishers.Once<Output, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Once {
 
     public func allSatisfy(_ predicate: (Output) -> Bool) -> Publishers.Once<Bool, Failure>
@@ -4928,11 +5302,27 @@ extension Publishers.Once {
     public func tryScan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Publishers.Once<T, Error>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Once where Failure == Never {
 
     public func setFailureType<E>(to failureType: E.Type) -> Publishers.Once<Output, E> where E : Error
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+extension Publishers.Count : Equatable where Upstream : Equatable {
+
+    /// Returns a Boolean value indicating whether two values are equal.
+    ///
+    /// Equality is the inverse of inequality. For any values `a` and `b`,
+    /// `a == b` implies that `a != b` is `false`.
+    ///
+    /// - Parameters:
+    ///   - lhs: A value to compare.
+    ///   - rhs: Another value to compare.
+    public static func == (lhs: Publishers.Count<Upstream>, rhs: Publishers.Count<Upstream>) -> Bool
+}
+
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.IgnoreOutput : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4944,6 +5334,7 @@ extension Publishers.IgnoreOutput : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.IgnoreOutput<Upstream>, rhs: Publishers.IgnoreOutput<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Retry : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -4957,6 +5348,7 @@ extension Publishers.Retry : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.Retry<Upstream>, rhs: Publishers.Retry<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.ReplaceEmpty : Equatable where Upstream : Equatable, Upstream.Output : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4968,6 +5360,7 @@ extension Publishers.ReplaceEmpty : Equatable where Upstream : Equatable, Upstre
     public static func == (lhs: Publishers.ReplaceEmpty<Upstream>, rhs: Publishers.ReplaceEmpty<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.ReplaceError : Equatable where Upstream : Equatable, Upstream.Output : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -4979,6 +5372,7 @@ extension Publishers.ReplaceError : Equatable where Upstream : Equatable, Upstre
     public static func == (lhs: Publishers.ReplaceError<Upstream>, rhs: Publishers.ReplaceError<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.DropUntilOutput : Equatable where Upstream : Equatable, Other : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -4992,6 +5386,7 @@ extension Publishers.DropUntilOutput : Equatable where Upstream : Equatable, Oth
     public static func == (lhs: Publishers.DropUntilOutput<Upstream, Other>, rhs: Publishers.DropUntilOutput<Upstream, Other>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Concatenate : Equatable where Prefix : Equatable, Suffix : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -5003,6 +5398,7 @@ extension Publishers.Concatenate : Equatable where Prefix : Equatable, Suffix : 
     public static func == (lhs: Publishers.Concatenate<Prefix, Suffix>, rhs: Publishers.Concatenate<Prefix, Suffix>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Fail : Equatable where Failure : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -5016,6 +5412,7 @@ extension Publishers.Fail : Equatable where Failure : Equatable {
     public static func == (lhs: Publishers.Fail<Output, Failure>, rhs: Publishers.Fail<Output, Failure>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Last : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -5027,6 +5424,7 @@ extension Publishers.Last : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.Last<Upstream>, rhs: Publishers.Last<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Map {
 
     public func map<T>(_ transform: @escaping (Output) -> T) -> Publishers.Map<Upstream, T>
@@ -5034,6 +5432,7 @@ extension Publishers.Map {
     public func tryMap<T>(_ transform: @escaping (Output) throws -> T) -> Publishers.TryMap<Upstream, T>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.TryMap {
 
     public func map<T>(_ transform: @escaping (Output) -> T) -> Publishers.TryMap<Upstream, T>
@@ -5041,6 +5440,7 @@ extension Publishers.TryMap {
     public func tryMap<T>(_ transform: @escaping (Output) throws -> T) -> Publishers.TryMap<Upstream, T>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence {
 
     public func allSatisfy(_ predicate: (Publishers.Sequence<Elements, Failure>.Output) -> Bool) -> Publishers.Once<Bool, Failure>
@@ -5092,6 +5492,7 @@ extension Publishers.Sequence {
     public func setFailureType<E>(to error: E.Type) -> Publishers.Sequence<Elements, E> where E : Error
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements.Element : Equatable {
 
     public func removeDuplicates() -> Publishers.Sequence<[Publishers.Sequence<Elements, Failure>.Output], Failure>
@@ -5099,6 +5500,7 @@ extension Publishers.Sequence where Elements.Element : Equatable {
     public func contains(_ output: Elements.Element) -> Publishers.Once<Bool, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements.Element : Comparable {
 
     public func min() -> Publishers.Optional<Elements.Element, Failure>
@@ -5106,16 +5508,19 @@ extension Publishers.Sequence where Elements.Element : Comparable {
     public func max() -> Publishers.Optional<Elements.Element, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements : Collection {
 
     public func first() -> Publishers.Optional<Elements.Element, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements : Collection {
 
     public func count() -> Publishers.Once<Int, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements : Collection {
 
     public func output(at index: Elements.Index) -> Publishers.Optional<Publishers.Sequence<Elements, Failure>.Output, Failure>
@@ -5123,6 +5528,7 @@ extension Publishers.Sequence where Elements : Collection {
     public func output(in range: Range<Elements.Index>) -> Publishers.Sequence<[Publishers.Sequence<Elements, Failure>.Output], Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements : BidirectionalCollection {
 
     public func last() -> Publishers.Optional<Publishers.Sequence<Elements, Failure>.Output, Failure>
@@ -5132,6 +5538,7 @@ extension Publishers.Sequence where Elements : BidirectionalCollection {
     public func tryLast(where predicate: (Publishers.Sequence<Elements, Failure>.Output) throws -> Bool) -> Publishers.Optional<Publishers.Sequence<Elements, Failure>.Output, Error>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements : RandomAccessCollection {
 
     public func output(at index: Elements.Index) -> Publishers.Optional<Publishers.Sequence<Elements, Failure>.Output, Failure>
@@ -5139,11 +5546,13 @@ extension Publishers.Sequence where Elements : RandomAccessCollection {
     public func output(in range: Range<Elements.Index>) -> Publishers.Sequence<[Publishers.Sequence<Elements, Failure>.Output], Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements : RandomAccessCollection {
 
     public func count() -> Publishers.Optional<Int, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence where Elements : RangeReplaceableCollection {
 
     public func prepend(_ elements: Publishers.Sequence<Elements, Failure>.Output...) -> Publishers.Sequence<Elements, Failure>
@@ -5159,6 +5568,7 @@ extension Publishers.Sequence where Elements : RangeReplaceableCollection {
     public func append(_ publisher: Publishers.Sequence<Elements, Failure>) -> Publishers.Sequence<Elements, Failure>
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Sequence : Equatable where Elements : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -5172,6 +5582,7 @@ extension Publishers.Sequence : Equatable where Elements : Equatable {
     public static func == (lhs: Publishers.Sequence<Elements, Failure>, rhs: Publishers.Sequence<Elements, Failure>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Zip : Equatable where A : Equatable, B : Equatable {
 
     /// Returns a Boolean value that indicates whether two publishers are equivalent.
@@ -5189,6 +5600,7 @@ extension Publishers.Zip : Equatable where A : Equatable, B : Equatable {
 ///   - lhs: A zip publisher to compare for equality.
 ///   - rhs: Another zip publisher to compare for equality.
 /// - Returns: `true` if the corresponding upstream publishers of each zip publisher are equal, `false` otherwise.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Zip3 : Equatable where A : Equatable, B : Equatable, C : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -5208,6 +5620,7 @@ extension Publishers.Zip3 : Equatable where A : Equatable, B : Equatable, C : Eq
 ///   - lhs: A zip publisher to compare for equality.
 ///   - rhs: Another zip publisher to compare for equality.
 /// - Returns: `true` if the corresponding upstream publishers of each zip publisher are equal, `false` otherwise.
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Zip4 : Equatable where A : Equatable, B : Equatable, C : Equatable, D : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -5221,6 +5634,7 @@ extension Publishers.Zip4 : Equatable where A : Equatable, B : Equatable, C : Eq
     public static func == (lhs: Publishers.Zip4<A, B, C, D>, rhs: Publishers.Zip4<A, B, C, D>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Output : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value indicating whether two values are equal.
@@ -5234,6 +5648,7 @@ extension Publishers.Output : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.Output<Upstream>, rhs: Publishers.Output<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.Drop : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value that indicates whether the two publishers are equivalent.
@@ -5245,6 +5660,7 @@ extension Publishers.Drop : Equatable where Upstream : Equatable {
     public static func == (lhs: Publishers.Drop<Upstream>, rhs: Publishers.Drop<Upstream>) -> Bool
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Publishers.First : Equatable where Upstream : Equatable {
 
     /// Returns a Boolean value that indicates whether two first publishers have equal upstream publishers.
@@ -5289,6 +5705,7 @@ public protocol Scheduler {
     func schedule(after date: Self.SchedulerTimeType, interval: Self.SchedulerTimeType.Stride, tolerance: Self.SchedulerTimeType.Stride, options: Self.SchedulerOptions?, _ action: @escaping () -> Void) -> Cancellable
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Scheduler {
 
     /// Performs the action at some time after the specified date, using the scheduler’s minimum tolerance.
@@ -5341,9 +5758,10 @@ public protocol Subject : AnyObject, Publisher {
     func send(completion: Subscribers.Completion<Self.Failure>)
 }
 
-extension Subject {
+extension Subject where Self.Output == Void {
 
-    public func eraseToAnySubject() -> AnySubject<Self.Output, Self.Failure>
+    /// Signals subscribers.
+    public func send()
 }
 
 /// A protocol that declares a type that can receive input from a publisher.
@@ -5376,9 +5794,10 @@ public protocol Subscriber : CustomCombineIdentifierConvertible {
     func receive(completion: Subscribers.Completion<Self.Failure>)
 }
 
-extension Subscriber {
+extension Subscriber where Self.Input == Void {
 
-    public func eraseToAnySubscriber() -> AnySubscriber<Self.Input, Self.Failure>
+    @available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
+    public func receive() -> Subscribers.Demand
 }
 
 /// A namespace for types related to the `Subscriber` protocol.
@@ -5386,24 +5805,17 @@ extension Subscriber {
 public enum Subscribers {
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Subscribers {
 
     /// A simple subscriber that requests an unlimited number of values upon subscription.
-    final public class Sink<Upstream> : Subscriber, Cancellable, CustomStringConvertible, CustomReflectable, CustomPlaygroundDisplayConvertible where Upstream : Publisher {
-
-        /// The kind of values this subscriber receives.
-        public typealias Input = Upstream.Output
-
-        /// The kind of errors this subscriber might receive.
-        ///
-        /// Use `Never` if this `Subscriber` cannot receive errors.
-        public typealias Failure = Upstream.Failure
+    final public class Sink<Input, Failure> : Subscriber, Cancellable, CustomStringConvertible, CustomReflectable, CustomPlaygroundDisplayConvertible where Failure : Error {
 
         /// The closure to execute on receipt of a value.
-        final public let receiveValue: (Upstream.Output) -> Void
+        final public let receiveValue: (Input) -> Void
 
         /// The closure to execute on completion.
-        final public let receiveCompletion: (Subscribers.Completion<Upstream.Failure>) -> Void
+        final public let receiveCompletion: (Subscribers.Completion<Failure>) -> Void
 
         /// A textual representation of this instance.
         ///
@@ -5444,7 +5856,7 @@ extension Subscribers {
         /// - Parameters:
         ///   - receiveValue: The closure to execute on receipt of a value. If `nil`, the sink uses an empty closure.
         ///   - receiveCompletion: The closure to execute on completion. If `nil`, the sink uses an empty closure.
-        public init(receiveCompletion: ((Subscribers.Completion<Subscribers.Sink<Upstream>.Failure>) -> Void)? = nil, receiveValue: @escaping ((Subscribers.Sink<Upstream>.Input) -> Void))
+        public init(receiveCompletion: ((Subscribers.Completion<Failure>) -> Void)? = nil, receiveValue: @escaping ((Input) -> Void))
 
         /// Tells the subscriber that it has successfully subscribed to the publisher and may request items.
         ///
@@ -5456,18 +5868,19 @@ extension Subscribers {
         ///
         /// - Parameter input: The published element.
         /// - Returns: A `Demand` instance indicating how many more elements the subcriber expects to receive.
-        final public func receive(_ value: Subscribers.Sink<Upstream>.Input) -> Subscribers.Demand
+        final public func receive(_ value: Input) -> Subscribers.Demand
 
         /// Tells the subscriber that the publisher has completed publishing, either normally or with an error.
         ///
         /// - Parameter completion: A `Completion` case indicating whether publishing completed normally or with an error.
-        final public func receive(completion: Subscribers.Completion<Subscribers.Sink<Upstream>.Failure>)
+        final public func receive(completion: Subscribers.Completion<Failure>)
 
         /// Cancel the activity.
         final public func cancel()
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Subscribers {
 
     /// A signal that a publisher doesn’t produce additional elements, either due to normal completion or an error.
@@ -5482,21 +5895,47 @@ extension Subscribers {
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Subscribers {
 
     /// A requested number of items, sent to a publisher from a subscriber via the subscription.
     ///
     /// - unlimited: A request for an unlimited number of items.
     /// - max: A request for a maximum number of items.
-    public enum Demand : Equatable, Comparable {
+    public struct Demand : Equatable, Comparable, Hashable, Codable, CustomStringConvertible {
 
         /// Requests as many values as the `Publisher` can produce.
-        case unlimited
+        public static var unlimited: Subscribers.Demand { get }
 
         /// Limits the maximum number of values.
         /// The `Publisher` may send fewer than the requested number.
         /// Negative values will result in a `fatalError`.
-        case max(Int)
+        public static func max(_ value: Int) -> Subscribers.Demand
+
+        /// A textual representation of this instance.
+        ///
+        /// Calling this property directly is discouraged. Instead, convert an
+        /// instance of any type to a string by using the `String(describing:)`
+        /// initializer. This initializer works with any type, and uses the custom
+        /// `description` property for types that conform to
+        /// `CustomStringConvertible`:
+        ///
+        ///     struct Point: CustomStringConvertible {
+        ///         let x: Int, y: Int
+        ///
+        ///         var description: String {
+        ///             return "(\(x), \(y))"
+        ///         }
+        ///     }
+        ///
+        ///     let p = Point(x: 21, y: 30)
+        ///     let s = String(describing: p)
+        ///     print(s)
+        ///     // Prints "(21, 30)"
+        ///
+        /// The conversion of `p` to a string in the assignment to `s` uses the
+        /// `Point` type's `description` property.
+        public var description: String { get }
 
         /// When adding any value to .unlimited, the result is .unlimited.
         public static func + (lhs: Subscribers.Demand, rhs: Subscribers.Demand) -> Subscribers.Demand
@@ -5519,16 +5958,16 @@ extension Subscribers {
 
         public static func *= (lhs: inout Subscribers.Demand, rhs: Int)
 
-        /// When subtracting any value (including .unlimited) from .unlimited, the result is still .unlimited. Subtracting unlimited from any value (except unlimited) results in .max(0). A negative demand is possible, but be aware that it is not usable when requesting values in a subscription.
+        /// When subtracting any value (including .unlimited) from .unlimited, the result is still .unlimited. Subtracting unlimited from any value (except unlimited) results in .max(0). A negative demand is not possible; any operation that would result in a negative value is clamped to .max(0).
         public static func - (lhs: Subscribers.Demand, rhs: Subscribers.Demand) -> Subscribers.Demand
 
-        /// When subtracting any value (including .unlimited) from .unlimited, the result is still .unlimited. Subtracting unlimited from any value (except unlimited) results in .max(0). A negative demand is possible, but be aware that it is not usable when requesting values in a subscription.
+        /// When subtracting any value (including .unlimited) from .unlimited, the result is still .unlimited. Subtracting unlimited from any value (except unlimited) results in .max(0). A negative demand is not possible; any operation that would result in a negative value is clamped to .max(0).
         public static func -= (lhs: inout Subscribers.Demand, rhs: Subscribers.Demand)
 
         /// When subtracting any value from .unlimited, the result is still .unlimited. A negative demand is possible, but be aware that it is not usable when requesting values in a subscription.
         public static func - (lhs: Subscribers.Demand, rhs: Int) -> Subscribers.Demand
 
-        /// When subtracting any value from .unlimited, the result is still .unlimited. A negative demand is possible, but be aware that it is not usable when requesting values in a subscription.
+        /// When subtracting any value from .unlimited, the result is still .unlimited. A negative demand is not possible; any operation that would result in a negative value is clamped to .max(0)
         public static func -= (lhs: inout Subscribers.Demand, rhs: Int)
 
         public static func > (lhs: Subscribers.Demand, rhs: Int) -> Bool
@@ -5546,16 +5985,6 @@ extension Subscribers {
         public static func <= (lhs: Subscribers.Demand, rhs: Int) -> Bool
 
         public static func <= (lhs: Int, rhs: Subscribers.Demand) -> Bool
-
-        /// Returns a Boolean value indicating whether two values are equal.
-        ///
-        /// Equality is the inverse of inequality. For any values `a` and `b`,
-        /// `a == b` implies that `a != b` is `false`.
-        ///
-        /// - Parameters:
-        ///   - lhs: A value to compare.
-        ///   - rhs: Another value to compare.
-        public static func == (lhs: Subscribers.Demand, rhs: Subscribers.Demand) -> Bool
 
         /// If lhs is .unlimited, then the result is always false. If rhs is .unlimited then the result is always false. Otherwise, the two max values are compared.
         public static func < (lhs: Subscribers.Demand, rhs: Subscribers.Demand) -> Bool
@@ -5588,9 +6017,63 @@ extension Subscribers {
 
         /// Returns the number of requested values, or nil if unlimited.
         public var max: Int? { get }
+
+        /// Returns a Boolean value indicating whether two values are equal.
+        ///
+        /// Equality is the inverse of inequality. For any values `a` and `b`,
+        /// `a == b` implies that `a != b` is `false`.
+        ///
+        /// - Parameters:
+        ///   - lhs: A value to compare.
+        ///   - rhs: Another value to compare.
+        public static func == (a: Subscribers.Demand, b: Subscribers.Demand) -> Bool
+
+        /// The hash value.
+        ///
+        /// Hash values are not guaranteed to be equal across different executions of
+        /// your program. Do not save hash values to use during a future execution.
+        ///
+        /// - Important: `hashValue` is deprecated as a `Hashable` requirement. To
+        ///   conform to `Hashable`, implement the `hash(into:)` requirement instead.
+        public var hashValue: Int { get }
+
+        /// Hashes the essential components of this value by feeding them into the
+        /// given hasher.
+        ///
+        /// Implement this method to conform to the `Hashable` protocol. The
+        /// components used for hashing must be the same as the components compared
+        /// in your type's `==` operator implementation. Call `hasher.combine(_:)`
+        /// with each of these components.
+        ///
+        /// - Important: Never call `finalize()` on `hasher`. Doing so may become a
+        ///   compile-time error in the future.
+        ///
+        /// - Parameter hasher: The hasher to use when combining the components
+        ///   of this instance.
+        public func hash(into hasher: inout Hasher)
+
+        /// Creates a new instance by decoding from the given decoder.
+        ///
+        /// This initializer throws an error if reading from the decoder fails, or
+        /// if the data read is corrupted or otherwise invalid.
+        ///
+        /// - Parameter decoder: The decoder to read data from.
+        public init(from decoder: Decoder) throws
+
+        /// Encodes this value into the given encoder.
+        ///
+        /// If the value fails to encode anything, `encoder` will encode an empty
+        /// keyed container in its place.
+        ///
+        /// This function throws an error if any values are invalid for the given
+        /// encoder's format.
+        ///
+        /// - Parameter encoder: The encoder to write data to.
+        public func encode(to encoder: Encoder) throws
     }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Subscribers {
 
     final public class Assign<Root, Input> : Subscriber, Cancellable, CustomStringConvertible, CustomReflectable, CustomPlaygroundDisplayConvertible {
@@ -5662,6 +6145,68 @@ extension Subscribers {
     }
 }
 
+extension Subscribers.Completion : Equatable where Failure : Equatable {
+
+    /// Returns a Boolean value indicating whether two values are equal.
+    ///
+    /// Equality is the inverse of inequality. For any values `a` and `b`,
+    /// `a == b` implies that `a != b` is `false`.
+    ///
+    /// - Parameters:
+    ///   - lhs: A value to compare.
+    ///   - rhs: Another value to compare.
+    public static func == (a: Subscribers.Completion<Failure>, b: Subscribers.Completion<Failure>) -> Bool
+}
+
+extension Subscribers.Completion : Hashable where Failure : Hashable {
+
+    /// The hash value.
+    ///
+    /// Hash values are not guaranteed to be equal across different executions of
+    /// your program. Do not save hash values to use during a future execution.
+    ///
+    /// - Important: `hashValue` is deprecated as a `Hashable` requirement. To
+    ///   conform to `Hashable`, implement the `hash(into:)` requirement instead.
+    public var hashValue: Int { get }
+
+    /// Hashes the essential components of this value by feeding them into the
+    /// given hasher.
+    ///
+    /// Implement this method to conform to the `Hashable` protocol. The
+    /// components used for hashing must be the same as the components compared
+    /// in your type's `==` operator implementation. Call `hasher.combine(_:)`
+    /// with each of these components.
+    ///
+    /// - Important: Never call `finalize()` on `hasher`. Doing so may become a
+    ///   compile-time error in the future.
+    ///
+    /// - Parameter hasher: The hasher to use when combining the components
+    ///   of this instance.
+    public func hash(into hasher: inout Hasher)
+}
+
+extension Subscribers.Completion : Codable where Failure : Decodable, Failure : Encodable {
+
+    /// Creates a new instance by decoding from the given decoder.
+    ///
+    /// This initializer throws an error if reading from the decoder fails, or
+    /// if the data read is corrupted or otherwise invalid.
+    ///
+    /// - Parameter decoder: The decoder to read data from.
+    public init(from decoder: Decoder) throws
+
+    /// Encodes this value into the given encoder.
+    ///
+    /// If the value fails to encode anything, `encoder` will encode an empty
+    /// keyed container in its place.
+    ///
+    /// This function throws an error if any values are invalid for the given
+    /// encoder's format.
+    ///
+    /// - Parameter encoder: The encoder to write data to.
+    public func encode(to encoder: Encoder) throws
+}
+
 /// A protocol representing the connection of a subscriber to a publisher.
 ///
 /// Subcriptions are class constrained because a `Subscription` has identity -
@@ -5683,6 +6228,7 @@ public protocol Subscription : Cancellable, CustomCombineIdentifierConvertible {
 public enum Subscriptions {
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Subscriptions {
 
     /// Returns the 'empty' subscription.
@@ -5691,6 +6237,7 @@ extension Subscriptions {
     public static var empty: Subscription { get }
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public protocol TopLevelDecoder {
 
     associatedtype Input
@@ -5698,6 +6245,7 @@ public protocol TopLevelDecoder {
     func decode<T>(_ type: T.Type, from: Self.Input) throws -> T where T : Decodable
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 public protocol TopLevelEncoder {
 
     associatedtype Output
@@ -5705,6 +6253,7 @@ public protocol TopLevelEncoder {
     func encode<T>(_ value: T) throws -> Self.Output where T : Encodable
 }
 
+@available(OSX 10.15, iOS 13.0, tvOS 13.0, watchOS 6.0, *)
 extension Sequence {
 
     public func publisher() -> Publishers.Sequence<Self, Never>
