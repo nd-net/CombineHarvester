@@ -26,6 +26,12 @@ public protocol Subscriber: CustomCombineIdentifierConvertible {
     func receive(completion: Subscribers.Completion<Self.Failure>)
 }
 
+extension Subscriber where Self.Input == Void {
+    public func receive() -> Subscribers.Demand {
+        return self.receive(())
+    }
+}
+
 /// A namespace for types related to the `Subscriber` protocol.
 public enum Subscribers {
 }
@@ -35,14 +41,50 @@ extension Subscribers {
     ///
     /// - finished: The publisher finished normally.
     /// - failure: The publisher stopped publishing due to the indicated error.
-    public enum Completion<Failure> where Failure: Error {
+    public enum Completion<Failure: Error> {
         case finished
-
         case failure(Failure)
     }
 }
 
 extension Subscribers.Completion: Equatable where Failure: Equatable {
+}
+
+extension Subscribers.Completion: Hashable where Failure: Hashable {
+}
+
+extension Subscribers.Completion: Codable where Failure: Encodable, Failure: Decodable {
+    private enum CodingKeys: String, CodingKey {
+        case status
+        case failure
+    }
+
+    fileprivate enum CompletionStatus: String, Codable {
+        case finished
+        case failure
+    }
+
+    public func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case .finished:
+            try container.encode(CompletionStatus.finished, forKey: .status)
+        case let .failure(failure):
+            try container.encode(CompletionStatus.failure, forKey: .status)
+            try container.encode(failure, forKey: .failure)
+        }
+    }
+
+    public init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        let status = try container.decode(CompletionStatus.self, forKey: .status)
+        switch status {
+        case .finished:
+            self = .finished
+        case .failure:
+            self = .failure(try container.decode(Failure.self, forKey: .failure))
+        }
+    }
 }
 
 extension Subscribers {

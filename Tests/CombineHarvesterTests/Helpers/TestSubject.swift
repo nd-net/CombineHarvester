@@ -8,7 +8,7 @@
 import CombineHarvester
 import Foundation
 
-enum TestError: Error {
+enum TestError: String, Error, Codable {
     case error
     case otherError
 }
