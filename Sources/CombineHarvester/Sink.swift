@@ -1,13 +1,10 @@
 extension Subscribers {
     /// A simple subscriber that requests an unlimited number of values upon subscription.
-    public final class Sink<Upstream>: Subscriber, Cancellable /* , CustomStringConvertible, CustomReflectable, CustomPlaygroundDisplayConvertible */ where Upstream: Publisher {
-        public typealias Input = Upstream.Output
-        public typealias Failure = Upstream.Failure
-
+    public final class Sink<Input, Failure: Error>: Subscriber, Cancellable /* , CustomStringConvertible, CustomReflectable, CustomPlaygroundDisplayConvertible */ {
         /// The closure to execute on receipt of a value.
-        public final let receiveValue: (Upstream.Output) -> Void
+        public final let receiveValue: (Input) -> Void
         /// The closure to execute on completion.
-        public final let receiveCompletion: (Subscribers.Completion<Upstream.Failure>) -> Void
+        public final let receiveCompletion: (Subscribers.Completion<Failure>) -> Void
 
         public final var description: String {
             return "Sink(\(String(describing: self.subscription)))"
@@ -64,8 +61,8 @@ extension Publisher {
     /// - parameter receiveValue: The closure to execute on receipt of a value. If `nil`, the sink uses an empty closure.
     /// - parameter receiveComplete: The closure to execute on completion. If `nil`, the sink uses an empty closure.
     /// - Returns: A subscriber that performs the provided closures upon receiving values or completion.
-    public func sink(receiveCompletion: ((Subscribers.Completion<Self.Failure>) -> Void)? = nil, receiveValue: @escaping ((Self.Output) -> Void)) -> Subscribers.Sink<Self> {
-        let sink = Subscribers.Sink<Self>(receiveCompletion: receiveCompletion, receiveValue: receiveValue)
+    public func sink(receiveCompletion: ((Subscribers.Completion<Self.Failure>) -> Void)? = nil, receiveValue: @escaping ((Self.Output) -> Void)) -> Subscribers.Sink<Self.Output, Self.Failure> {
+        let sink = Subscribers.Sink<Self.Output, Self.Failure>(receiveCompletion: receiveCompletion, receiveValue: receiveValue)
         self.subscribe(sink)
         return sink
     }
