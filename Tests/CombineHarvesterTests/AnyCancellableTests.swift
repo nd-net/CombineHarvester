@@ -57,4 +57,10 @@ class AnyCancellableTests: XCTestCase {
         block2()
         XCTAssertEqual(canceller.cancellations, 1, "deinit causes exactly one cancellation of a closure")
     }
+
+    func testEquatable() {
+        let cancellable = AnyCancellable {}
+        XCTAssertTrue(cancellable == cancellable)
+        XCTAssertFalse(cancellable == AnyCancellable {})
+    }
 }
