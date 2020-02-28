@@ -2,13 +2,7 @@
 ///
 /// Use a `PassthroughSubject` in unit tests when you want a publisher than can publish specific values on-demand during tests.
 public final class PassthroughSubject<Output, Failure>: Subject where Failure: Error {
-    private var subscription: PassthroughSubscription? {
-        willSet {
-            if self.subscription?.combineIdentifier != newValue?.combineIdentifier {
-                self.subscription?.cancel()
-            }
-        }
-    }
+    private var subscriptions = [PassthroughSubscription]()
 
     private class PassthroughSubscription: Subscription {
         var subscriber: Atomic<AnySubscriber<Output, Failure>?>
@@ -48,21 +42,23 @@ public final class PassthroughSubject<Output, Failure>: Subject where Failure: E
 
     public final func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
         let subscription = PassthroughSubscription(subscriber: subscriber)
-        self.subscription = subscription
+        self.subscriptions.append(subscription)
+        self.send(subscription: subscription)
         subscription.sendSubscription()
     }
 
-    /// Sends a value to the subscriber.
-    ///
-    /// - Parameter value: The value to send.
-    public final func send(_ input: Output) {
-        self.subscription?.send(input)
+    public final func send(subscription _: Subscription) {
     }
 
-    /// Sends a completion signal to the subscriber.
-    ///
-    /// - Parameter completion: A `Completion` instance which indicates whether publishing has finished normally or failed with an error.
+    public final func send(_ value: Output) {
+        for subscription in self.subscriptions {
+            subscription.send(value)
+        }
+    }
+
     public final func send(completion: Subscribers.Completion<Failure>) {
-        self.subscription?.send(completion: completion)
+        for subscription in self.subscriptions {
+            subscription.send(completion: completion)
+        }
     }
 }

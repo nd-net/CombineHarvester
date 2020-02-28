@@ -7,7 +7,7 @@ public final class CurrentValueSubject<Output, Failure>: Subject where Failure: 
         }
     }
 
-    private var subscription = Atomic<NestedSubscription?>(value: nil)
+    private var subscriptions = [NestedSubscription]()
 
     /// Creates a current value subject with the given initial value.
     ///
@@ -36,7 +36,7 @@ public final class CurrentValueSubject<Output, Failure>: Subject where Failure: 
         }
 
         func cancel() {
-            self.currentValueSubject.subscription.swap(nil)?.cancel()
+            self.currentValueSubject.subscriptions.removeAll { $0 === self }
         }
 
         public final func send(_ value: Output) {
@@ -53,15 +53,23 @@ public final class CurrentValueSubject<Output, Failure>: Subject where Failure: 
 
     public final func receive<S: Subscriber>(subscriber: S) where Output == S.Input, Failure == S.Failure {
         let subscription = NestedSubscription(self, subscriber: subscriber)
-        self.subscription.swap(subscription)?.cancel()
+        self.send(subscription: subscription)
+        self.subscriptions.append(subscription)
         subscriber.receive(subscription: subscription)
     }
 
+    public final func send(subscription _: Subscription) {
+    }
+
     public final func send(_ value: Output) {
-        self.subscription.value?.send(value)
+        for subscription in self.subscriptions {
+            subscription.send(value)
+        }
     }
 
     public final func send(completion: Subscribers.Completion<Failure>) {
-        self.subscription.value?.send(completion: completion)
+        for subscription in self.subscriptions {
+            subscription.send(completion: completion)
+        }
     }
 }

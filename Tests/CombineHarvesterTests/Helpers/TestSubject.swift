@@ -33,6 +33,9 @@ class TestSubject<Output, Failure: Error>: Subject {
     var completion = [Subscribers.Completion<Failure>]()
     var subscriber: AnySubscriber<Output, Failure>?
 
+    public func send(subscription _: Subscription) {
+    }
+
     func send(_ value: Output) {
         guard self.completion.isEmpty else {
             return
