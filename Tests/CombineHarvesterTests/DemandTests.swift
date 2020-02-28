@@ -16,42 +16,28 @@ class DemandTests: XCTestCase {
             // none + some
             (.none, .none, .none),
             (.none, .max(1), .max(1)),
-            (.none, .max(-1), .max(-1)),
             (.none, .unlimited, .unlimited),
 
             // max(1) + some
             (.max(1), .none, .max(1)),
             (.max(1), .max(1), .max(2)),
-            (.max(1), .max(-1), .none),
             (.max(1), .unlimited, .unlimited),
-
-            // max(-1) + some
-            (.max(-1), .none, .max(-1)),
-            (.max(-1), .max(1), .max(0)),
-            (.max(-1), .max(-1), .max(-2)),
-            (.max(-1), .unlimited, .unlimited),
 
             // unlimited + some
             (.unlimited, .none, .unlimited),
             (.unlimited, .max(1), .unlimited),
-            (.unlimited, .max(-1), .unlimited),
             (.unlimited, .unlimited, .unlimited),
         ]
         let demandPlusInt: [(Demand, Int, Demand)] = [
             // none + some
             (.none, 0, .none),
             (.none, 1, .max(1)),
-            (.none, -1, .max(-1)),
+            (.none, -1, .max(0)),
 
             // max(1) + some
             (.max(1), 0, .max(1)),
             (.max(1), 1, .max(2)),
             (.max(1), -1, .max(0)),
-
-            // max(-1) + some
-            (.max(-1), 0, .max(-1)),
-            (.max(-1), 1, .max(0)),
-            (.max(-1), -1, .max(-2)),
 
             // unlimited + some
             (.unlimited, 0, .unlimited),
@@ -80,43 +66,29 @@ class DemandTests: XCTestCase {
         let demandMinusDemand: [(Demand, Demand, Demand)] = [
             // none - some
             (.none, .none, .none),
-            (.none, .max(1), .max(-1)),
-            (.none, .max(-1), .max(1)),
+            (.none, .max(1), .none),
             (.none, .unlimited, .none),
 
             // max(1) - some
             (.max(1), .none, .max(1)),
             (.max(1), .max(1), .max(0)),
-            (.max(1), .max(-1), .max(2)),
             (.max(1), .unlimited, .none),
-
-            // max(-1) - some
-            (.max(-1), .none, .max(-1)),
-            (.max(-1), .max(1), .max(-2)),
-            (.max(-1), .max(-1), .max(0)),
-            (.max(-1), .unlimited, .none),
 
             // unlimited - some
             (.unlimited, .none, .unlimited),
             (.unlimited, .max(1), .unlimited),
-            (.unlimited, .max(-1), .unlimited),
             (.unlimited, .unlimited, .none),
         ]
         let demandMinusInt: [(Demand, Int, Demand)] = [
             // none - some
             (.none, 0, .none),
-            (.none, 1, .max(-1)),
+            (.none, 1, .max(0)),
             (.none, -1, .max(1)),
 
             // max(1) - some
             (.max(1), 0, .max(1)),
             (.max(1), 1, .max(0)),
             (.max(1), -1, .max(2)),
-
-            // max(-1) - some
-            (.max(-1), 0, .max(-1)),
-            (.max(-1), 1, .max(-2)),
-            (.max(-1), -1, .max(0)),
 
             // unlimited - some
             (.unlimited, 0, .unlimited),
@@ -153,13 +125,6 @@ class DemandTests: XCTestCase {
             (.max(1), 0, .none),
             (.max(1), 1, .max(1)),
             (.max(1), 2, .max(2)),
-            (.max(1), -1, .max(-1)),
-
-            // max(-1) , some
-            (.max(-1), 0, .max(0)),
-            (.max(-1), 1, .max(-1)),
-            (.max(-1), 2, .max(-2)),
-            (.max(-1), -1, .max(1)),
 
             // unlimited , some
             (.unlimited, 0, .none),
@@ -178,7 +143,7 @@ class DemandTests: XCTestCase {
     }
 
     func testEquatable() {
-        for number in -10...10 {
+        for number in 0...10 {
             XCTAssertTrue(Demand.max(number) == Demand.max(number))
             XCTAssertFalse(Demand.max(number) == Demand.unlimited)
             XCTAssertFalse(Demand.unlimited == Demand.max(number))
@@ -198,7 +163,6 @@ class DemandTests: XCTestCase {
 
     func testComparable() {
         let demandLessThan: [(Demand, Demand)] = [
-            (.max(-1), .none),
             (.none, .max(1)),
             (.none, .unlimited),
             (.max(1), .max(2)),
@@ -237,9 +201,14 @@ class DemandTests: XCTestCase {
     }
 
     func testMax() {
-        for number in -10...10 {
+        self.expectFatalError(expectedMessage: "", testcase: {
+            _ = Demand.max(-1)
+        })
+        for number in 0...10 {
             XCTAssertEqual(Demand.max(number).max, number)
         }
+        XCTAssertEqual(Demand.max(Int.max).max, Int.max)
+        XCTAssertNotEqual(Demand.unlimited.max, Int.max)
         XCTAssertEqual(Demand.none.max, 0)
         XCTAssertEqual(Demand.unlimited.max, nil)
     }
