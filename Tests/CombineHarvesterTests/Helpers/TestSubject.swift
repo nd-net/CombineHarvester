@@ -5,8 +5,8 @@
 //  Created by Andreas Hartl on 17.06.19.
 //
 
-import CombineHarvester
 import Foundation
+@testable import CombineHarvester
 
 enum TestError: String, Error, Codable {
     case error

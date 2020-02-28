@@ -1,7 +1,7 @@
 /// A type-erasing publisher.
 ///
 /// Use `AnyPublisher` to wrap a publisher whose type has details you don’t want to expose to subscribers or other publishers.
-public struct AnyPublisher<Output, Failure: Error> {
+public struct AnyPublisher<Output, Failure: Error> { /* : CustomStringConvertible, CustomPlaygroundDisplayConvertible */
     fileprivate let subscribe: (AnySubscriber<Output, Failure>) -> Void
 
     /// Creates a type-erasing publisher to wrap the provided publisher.
@@ -20,6 +20,9 @@ extension AnyPublisher: Publisher {
 }
 
 extension Publisher {
+    /// Wraps this publisher with a type eraser.
+    ///
+    /// Use `eraseToAnyPublisher()` to expose an instance of AnyPublisher to the downstream subscriber, rather than this publisher’s actual type.
     public func eraseToAnyPublisher() -> AnyPublisher<Self.Output, Self.Failure> {
         return self as? AnyPublisher<Self.Output, Self.Failure> ?? AnyPublisher(self)
     }
