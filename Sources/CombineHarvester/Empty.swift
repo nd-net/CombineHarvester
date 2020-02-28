@@ -2,7 +2,7 @@ extension Publishers {
     /// A publisher that never publishes any values, and optionally finishes immediately.
     ///
     /// You can create a ”Never” publisher — one which never sends values and never finishes or fails — with the initializer `Empty(completeImmediately: false)`.
-    public struct Empty<Output, Failure>: Publisher, Equatable where Failure: Error {
+    public struct Empty<Output, Failure: Error>: Publisher, Equatable {
         /// Creates an empty publisher.
         ///
         /// - Parameter completeImmediately: A Boolean value that indicates whether the publisher should immediately finish.
