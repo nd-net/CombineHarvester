@@ -1,6 +1,7 @@
 /// A publisher that eventually produces one value and then finishes or fails.
-public final class Future<Output, Failure>: Publisher where Failure: Error {
+public final class Future<Output, Failure: Error>: Publisher {
     public typealias Promise = (Result<Output, Failure>) -> Void
+
     private typealias PromiseHandler = (@escaping Promise) -> Void
 
     private let attemptToFulfill: PromiseHandler
