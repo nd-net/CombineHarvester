@@ -38,12 +38,6 @@ extension Publishers {
     }
 }
 
-extension Publishers.Autoconnect: Equatable where Upstream: Equatable {
-    public static func == (lhs: Publishers.Autoconnect<Upstream>, rhs: Publishers.Autoconnect<Upstream>) -> Bool {
-        return lhs.upstream == rhs.upstream
-    }
-}
-
 extension ConnectablePublisher {
     /// Automates the process of connecting or disconnecting from this connectable publisher.
     ///
