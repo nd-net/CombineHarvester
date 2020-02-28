@@ -1,6 +1,7 @@
 /// A type-erasing cancellable object that executes a provided closure when canceled.
 ///
 /// Subscriber implementations can use this type to provide a “cancellation token” that makes it possible for a caller to cancel a publisher, but not to use the `Subscription` object to request items.
+/// An AnyCancellable instance automatically calls `cancel()` when deinitialized.
 public final class AnyCancellable: Cancellable, Hashable {
     private let identifier = CombineIdentifier()
     private var cancelClosure: Atomic<(() -> Void)?>
@@ -8,12 +9,12 @@ public final class AnyCancellable: Cancellable, Hashable {
     /// Initializes the cancellable object with the given cancel-time closure.
     ///
     /// - Parameter cancel: A closure that the `cancel()` method executes.
-    public init(_ cancelClosure: @escaping () -> Void) {
-        self.cancelClosure = Atomic(value: cancelClosure)
+    public init(_ cancel: @escaping () -> Void) {
+        self.cancelClosure = Atomic(value: cancel)
     }
 
-    public init<C>(_ cancellable: C) where C: Cancellable {
-        self.cancelClosure = Atomic(value: cancellable.cancel)
+    public init<C: Cancellable>(_ canceller: C) {
+        self.cancelClosure = Atomic(value: canceller.cancel)
     }
 
     /// Cancel the activity.
