@@ -31,6 +31,26 @@ extension Sequence {
     }
 }
 
+extension Publishers.Sequence where Failure == Never {
+    // swiftformat:disable:next typeSugar
+    public func min(by areInIncreasingOrder: (Output, Output) -> Bool) -> Optional<Output>.OptionalPublisher {
+        // swiftformat:disable:next typeSugar
+        return Optional.OptionalPublisher(self.sequence.min(by: areInIncreasingOrder))
+    }
+
+    // swiftformat:disable:next typeSugar
+    public func max(by areInIncreasingOrder: (Output, Output) -> Bool) -> Optional<Output>.OptionalPublisher {
+        // swiftformat:disable:next typeSugar
+        return Optional.OptionalPublisher(self.sequence.max(by: areInIncreasingOrder))
+    }
+
+    // swiftformat:disable:next typeSugar
+    public func first(where predicate: (Output) -> Bool) -> Optional<Output>.OptionalPublisher {
+        // swiftformat:disable:next typeSugar
+        return Optional.OptionalPublisher(self.sequence.first(where: predicate))
+    }
+}
+
 extension Publishers.Sequence {
     public func allSatisfy(_ predicate: (Output) -> Bool) -> Result<Bool, Failure>.ResultPublisher {
         return Result.success(self.sequence.allSatisfy(predicate)).resultPublisher
@@ -49,40 +69,6 @@ extension Publishers.Sequence {
         return Publishers.Sequence(sequence: transformed)
     }
 
-    // swiftformat:disable:next typeSugar
-    public func min(by areInIncreasingOrder: (Output, Output) -> Bool) -> Publishers.Optional<Output, Failure> {
-        // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.min(by: areInIncreasingOrder))
-    }
-
-    // swiftformat:disable:next typeSugar
-    public func tryMin(by areInIncreasingOrder: (Output, Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-        do {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(try self.sequence.min(by: areInIncreasingOrder))
-        } catch {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(error)
-        }
-    }
-
-    // swiftformat:disable:next typeSugar
-    public func max(by areInIncreasingOrder: (Output, Output) -> Bool) -> Publishers.Optional<Output, Failure> {
-        // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.max(by: areInIncreasingOrder))
-    }
-
-    // swiftformat:disable:next typeSugar
-    public func tryMax(by areInIncreasingOrder: (Output, Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-        do {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(try self.sequence.max(by: areInIncreasingOrder))
-        } catch {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(error)
-        }
-    }
-
     public func contains(where predicate: (Output) -> Bool) -> Result<Bool, Failure>.ResultPublisher {
         return Result.success(self.sequence.contains(where: predicate)).resultPublisher
     }
@@ -97,23 +83,6 @@ extension Publishers.Sequence {
 
     public func dropFirst(_ count: Int = 1) -> Publishers.Sequence<DropFirstSequence<Elements>, Failure> {
         return Publishers.Sequence(sequence: self.sequence.dropFirst(count))
-    }
-
-    // swiftformat:disable:next typeSugar
-    public func first(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
-        // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.first(where: predicate))
-    }
-
-    // swiftformat:disable:next typeSugar
-    public func tryFirst(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-        do {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(try self.sequence.first(where: predicate))
-        } catch {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(error)
-        }
     }
 
     public func filter(_ isIncluded: (Output) -> Bool) -> Publishers.Sequence<[Output], Failure> {
@@ -176,25 +145,36 @@ extension Publishers.Sequence where Elements.Element: Equatable {
     }
 }
 
-extension Publishers.Sequence where Elements.Element: Comparable {
+extension Publishers.Sequence where Elements.Element: Comparable, Failure == Never {
     // swiftformat:disable:next typeSugar
-    public func min() -> Publishers.Optional<Elements.Element, Failure> {
+    public func min() -> Optional<Output>.OptionalPublisher {
         // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.min())
+        return Optional.OptionalPublisher(self.sequence.min())
     }
 
     // swiftformat:disable:next typeSugar
-    public func max() -> Publishers.Optional<Elements.Element, Failure> {
+    public func max() -> Optional<Output>.OptionalPublisher {
         // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.max())
+        return Optional.OptionalPublisher(self.sequence.max())
     }
 }
 
-extension Publishers.Sequence where Elements: Collection {
+extension Publishers.Sequence where Elements: Collection, Failure == Never {
     // swiftformat:disable:next typeSugar
-    public func first() -> Publishers.Optional<Elements.Element, Failure> {
+    public func first() -> Optional<Output>.OptionalPublisher {
         // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.first)
+        return Optional.OptionalPublisher(self.sequence.first)
+    }
+
+    // swiftformat:disable:next typeSugar
+    public func output(at index: Elements.Index) -> Optional<Output>.OptionalPublisher {
+        guard self.range.contains(index) else {
+            // swiftformat:disable:next typeSugar
+            return Optional.OptionalPublisher(nil)
+        }
+        let value = self.sequence[index]
+        // swiftformat:disable:next typeSugar
+        return Optional.OptionalPublisher(value)
     }
 }
 
@@ -209,15 +189,37 @@ extension Publishers.Sequence where Elements: Collection {
         return self.sequence.startIndex..<self.sequence.endIndex
     }
 
+    public func output(in range: Range<Elements.Index>) -> Publishers.Sequence<[Output], Failure> {
+        let clamped = range.clamped(to: self.range)
+        let sequence = Array(self.sequence[clamped])
+        return Publishers.Sequence(sequence: sequence)
+    }
+}
+
+extension Publishers.Sequence where Elements: BidirectionalCollection, Failure == Never {
     // swiftformat:disable:next typeSugar
-    public func output(at index: Elements.Index) -> Publishers.Optional<Output, Failure> {
+    public func last() -> Optional<Output>.OptionalPublisher {
+        // swiftformat:disable:next typeSugar
+        return Optional.OptionalPublisher(self.sequence.last)
+    }
+
+    // swiftformat:disable:next typeSugar
+    public func last(where predicate: (Output) -> Bool) -> Optional<Output>.OptionalPublisher {
+        // swiftformat:disable:next typeSugar
+        return Optional.OptionalPublisher(self.sequence.last(where: predicate))
+    }
+}
+
+extension Publishers.Sequence where Elements: RandomAccessCollection {
+    // swiftformat:disable:next typeSugar
+    public func output(at index: Elements.Index) -> Optional<Output>.OptionalPublisher {
         guard self.range.contains(index) else {
             // swiftformat:disable:next typeSugar
-            return Publishers.Optional(nil)
+            return Optional.OptionalPublisher(nil)
         }
         let value = self.sequence[index]
         // swiftformat:disable:next typeSugar
-        return Publishers.Optional(value)
+        return Optional.OptionalPublisher(value)
     }
 
     public func output(in range: Range<Elements.Index>) -> Publishers.Sequence<[Output], Failure> {
@@ -227,55 +229,11 @@ extension Publishers.Sequence where Elements: Collection {
     }
 }
 
-extension Publishers.Sequence where Elements: BidirectionalCollection {
+extension Publishers.Sequence where Elements: RandomAccessCollection, Failure == Never {
     // swiftformat:disable:next typeSugar
-    public func last() -> Publishers.Optional<Output, Failure> {
+    public func count() -> Optional<Int>.OptionalPublisher {
         // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.last)
-    }
-
-    // swiftformat:disable:next typeSugar
-    public func last(where predicate: (Output) -> Bool) -> Publishers.Optional<Output, Failure> {
-        // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.last(where: predicate))
-    }
-
-    // swiftformat:disable:next typeSugar
-    public func tryLast(where predicate: (Output) throws -> Bool) -> Publishers.Optional<Output, Error> {
-        do {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(try self.sequence.last(where: predicate))
-        } catch {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(error)
-        }
-    }
-}
-
-extension Publishers.Sequence where Elements: RandomAccessCollection {
-    // swiftformat:disable:next typeSugar
-    public func output(at index: Elements.Index) -> Publishers.Optional<Output, Failure> {
-        guard self.range.contains(index) else {
-            // swiftformat:disable:next typeSugar
-            return Publishers.Optional(nil)
-        }
-        let value = self.sequence[index]
-        // swiftformat:disable:next typeSugar
-        return Publishers.Optional(value)
-    }
-
-    public func output(in range: Range<Elements.Index>) -> Publishers.Sequence<[Output], Failure> {
-        let clamped = range.clamped(to: self.range)
-        let sequence = Array(self.sequence[clamped])
-        return Publishers.Sequence(sequence: sequence)
-    }
-}
-
-extension Publishers.Sequence where Elements: RandomAccessCollection {
-    // swiftformat:disable:next typeSugar
-    public func count() -> Publishers.Optional<Int, Failure> {
-        // swiftformat:disable:next typeSugar
-        return Publishers.Optional(self.sequence.count)
+        return Optional.OptionalPublisher(self.sequence.count)
     }
 }
 

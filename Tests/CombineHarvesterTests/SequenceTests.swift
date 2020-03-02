@@ -11,7 +11,7 @@ import XCTest
 class SequenceTests: XCTestCase {
     typealias PublishersSequence = Publishers.Sequence<[String], Never>
     // swiftformat:disable:next typeSugar
-    typealias PublishersOptional = Publishers.Optional
+    typealias PublishersOptional<Output> = Optional<Output>.OptionalPublisher
     typealias ResultResultPublisher<O, E: Error> = Result<O, E>.ResultPublisher
 
     func testSubscribe() {
@@ -105,43 +105,6 @@ class SequenceTests: XCTestCase {
         XCTAssertEqual(PublishersSequence(sequence: []).min(by: { $0 > $1 }), PublishersOptional(nil))
         XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).min(by: { $0 > $1 }), PublishersOptional("Hello"))
         XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).min(by: { $0 > $1 }), PublishersOptional("World"))
-
-        XCTAssertEqual(
-            PublishersSequence(sequence: [])
-                .tryMin(by: { $0 > $1 })
-                .mapError { $0 as! TestError },
-            PublishersOptional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryMin(by: { $0 > $1 })
-                .mapError { $0 as! TestError },
-            PublishersOptional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello", "World"])
-                .tryMin(by: { $0 > $1 })
-                .mapError { $0 as! TestError },
-            PublishersOptional("World")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: [])
-                .tryMin(by: { _, _ in throw TestError.error })
-                .mapError { $0 as! TestError },
-            PublishersOptional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryMin(by: { _, _ in throw TestError.error })
-                .mapError { $0 as! TestError },
-            PublishersOptional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello", "World"])
-                .tryMin(by: { _, _ in throw TestError.error })
-                .mapError { $0 as! TestError },
-            PublishersOptional(.failure(TestError.error))
-        )
     }
 
     func testMax() {
@@ -151,43 +114,6 @@ class SequenceTests: XCTestCase {
         XCTAssertEqual(PublishersSequence(sequence: []).max(by: { $0 > $1 }), PublishersOptional(nil))
         XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).max(by: { $0 > $1 }), PublishersOptional("Hello"))
         XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).max(by: { $0 > $1 }), PublishersOptional("Hello"))
-
-        XCTAssertEqual(
-            PublishersSequence(sequence: [])
-                .tryMax(by: { $0 > $1 })
-                .mapError { $0 as! TestError },
-            PublishersOptional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryMax(by: { $0 > $1 })
-                .mapError { $0 as! TestError },
-            PublishersOptional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello", "World"])
-                .tryMax(by: { $0 > $1 })
-                .mapError { $0 as! TestError },
-            PublishersOptional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: [])
-                .tryMax(by: { _, _ in throw TestError.error })
-                .mapError { $0 as! TestError },
-            PublishersOptional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryMax(by: { _, _ in throw TestError.error })
-                .mapError { $0 as! TestError },
-            PublishersOptional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello", "World"])
-                .tryMax(by: { _, _ in throw TestError.error })
-                .mapError { $0 as! TestError },
-            PublishersOptional(.failure(TestError.error))
-        )
     }
 
     func testContains() {
@@ -243,8 +169,8 @@ class SequenceTests: XCTestCase {
         XCTAssertEqual(Publishers.Sequence<String, Never>(sequence: "").count(), ResultResultPublisher<Int, Never>(0))
         XCTAssertEqual(Publishers.Sequence<String, Never>(sequence: "H").count(), ResultResultPublisher<Int, Never>(1))
 
-        XCTAssertEqual(PublishersSequence(sequence: []).count(), Publishers.Optional(0), "RandomAccessCollection")
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).count(), Publishers.Optional(1), "RandomAccessCollection")
+        XCTAssertEqual(PublishersSequence(sequence: []).count(), Optional.OptionalPublisher(0), "RandomAccessCollection")
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).count(), Optional.OptionalPublisher(1), "RandomAccessCollection")
     }
 
     func testDrop() {
@@ -276,127 +202,29 @@ class SequenceTests: XCTestCase {
     }
 
     func testFirst() {
-        XCTAssertEqual(PublishersSequence(sequence: []).first(), Publishers.Optional(nil))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).first(), Publishers.Optional("Hello"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).first(), Publishers.Optional("Hello"))
+        XCTAssertEqual(PublishersSequence(sequence: []).first(), Optional.OptionalPublisher(nil))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).first(), Optional.OptionalPublisher("Hello"))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).first(), Optional.OptionalPublisher("Hello"))
 
-        XCTAssertEqual(PublishersSequence(sequence: []).first { $0 == "Hello" }, Publishers.Optional(nil))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).first { $0 == "Hello" }, Publishers.Optional("Hello"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).first { _ in false }, Publishers.Optional(nil))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).first { $0 == "Hello" }, Publishers.Optional("Hello"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).first { $0 == "World" }, Publishers.Optional("World"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).first { _ in false }, Publishers.Optional(nil))
-
-        XCTAssertEqual(
-            PublishersSequence(sequence: [])
-                .tryFirst { $0 == "Hello" }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryFirst { $0 == "Hello" }
-                .mapError { $0 as! TestError },
-            Publishers.Optional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryFirst { _ in false }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello", "World"])
-                .tryFirst { $0 == "Hello" }
-                .mapError { $0 as! TestError },
-            Publishers.Optional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello", "World"])
-                .tryFirst { $0 == "World" }
-                .mapError { $0 as! TestError },
-            Publishers.Optional("World")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryFirst { _ in false }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: [])
-                .tryFirst { _ in throw TestError.error }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryFirst { _ in throw TestError.error }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(TestError.error)
-        )
+        XCTAssertEqual(PublishersSequence(sequence: []).first { $0 == "Hello" }, Optional.OptionalPublisher(nil))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).first { $0 == "Hello" }, Optional.OptionalPublisher("Hello"))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).first { _ in false }, Optional.OptionalPublisher(nil))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).first { $0 == "Hello" }, Optional.OptionalPublisher("Hello"))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).first { $0 == "World" }, Optional.OptionalPublisher("World"))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).first { _ in false }, Optional.OptionalPublisher(nil))
     }
 
     func testLast() {
-        XCTAssertEqual(PublishersSequence(sequence: []).last(), Publishers.Optional(nil))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).last(), Publishers.Optional("Hello"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).last(), Publishers.Optional("World"))
+        XCTAssertEqual(PublishersSequence(sequence: []).last(), Optional.OptionalPublisher(nil))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).last(), Optional.OptionalPublisher("Hello"))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).last(), Optional.OptionalPublisher("World"))
 
-        XCTAssertEqual(PublishersSequence(sequence: []).last { $0 == "Hello" }, Publishers.Optional(nil))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).last { $0 == "Hello" }, Publishers.Optional("Hello"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).last { _ in false }, Publishers.Optional(nil))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).last { $0 == "Hello" }, Publishers.Optional("Hello"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).last { $0 == "World" }, Publishers.Optional("World"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).last { _ in false }, Publishers.Optional(nil))
-
-        XCTAssertEqual(
-            PublishersSequence(sequence: [])
-                .tryLast { $0 == "Hello" }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryLast { $0 == "Hello" }
-                .mapError { $0 as! TestError },
-            Publishers.Optional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryLast { _ in false }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello", "World"])
-                .tryLast { $0 == "Hello" }
-                .mapError { $0 as! TestError },
-            Publishers.Optional("Hello")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello", "World"])
-                .tryLast { $0 == "World" }
-                .mapError { $0 as! TestError },
-            Publishers.Optional("World")
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryLast { _ in false }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: [])
-                .tryLast { _ in throw TestError.error }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(nil)
-        )
-        XCTAssertEqual(
-            PublishersSequence(sequence: ["Hello"])
-                .tryLast { _ in throw TestError.error }
-                .mapError { $0 as! TestError },
-            Publishers.Optional(TestError.error)
-        )
+        XCTAssertEqual(PublishersSequence(sequence: []).last { $0 == "Hello" }, Optional.OptionalPublisher(nil))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).last { $0 == "Hello" }, Optional.OptionalPublisher("Hello"))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).last { _ in false }, Optional.OptionalPublisher(nil))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).last { $0 == "Hello" }, Optional.OptionalPublisher("Hello"))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).last { $0 == "World" }, Optional.OptionalPublisher("World"))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).last { _ in false }, Optional.OptionalPublisher(nil))
     }
 
     func testFilter() {
@@ -417,10 +245,6 @@ class SequenceTests: XCTestCase {
     }
 
     func testOutput() {
-        XCTAssertEqual(PublishersSequence(sequence: []).output(at: 0), PublishersOptional(nil))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).output(at: 0), PublishersOptional("Hello"))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).output(at: 1), PublishersOptional(nil))
-
         XCTAssertEqual(PublishersSequence(sequence: []).output(in: 0..<1), Publishers.Sequence(sequence: []))
         XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).output(in: 0..<1), Publishers.Sequence(sequence: ["Hello"]))
         XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).output(in: 1..<1), Publishers.Sequence(sequence: []))
