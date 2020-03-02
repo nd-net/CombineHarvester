@@ -54,7 +54,7 @@ extension Just {
         return self.map(predicate)
     }
 
-    public func tryAllSatisfy(_ predicate: (Output) throws -> Bool) -> Publishers.Once<Bool, Error> {
+    public func tryAllSatisfy(_ predicate: (Output) throws -> Bool) -> Result<Bool, Error>.ResultPublisher {
         return self.tryMap(predicate)
     }
 
@@ -96,26 +96,26 @@ extension Just {
     }
 
     public func prepend(_ elements: Output...) -> Publishers.Sequence<[Output], Failure> {
-        return Publishers.Sequence(sequence: elements + [output])
+        return Publishers.Sequence(sequence: elements + [self.output])
     }
 
     public func prepend<S: Swift.Sequence>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element {
-        return Publishers.Sequence(sequence: elements + [output])
+        return Publishers.Sequence(sequence: elements + [self.output])
     }
 
     public func append(_ elements: Output...) -> Publishers.Sequence<[Output], Failure> {
-        return Publishers.Sequence(sequence: [output] + elements)
+        return Publishers.Sequence(sequence: [self.output] + elements)
     }
 
     public func append<S: Swift.Sequence>(_ elements: S) -> Publishers.Sequence<[Output], Failure> where Output == S.Element {
-        return Publishers.Sequence(sequence: [output] + elements)
+        return Publishers.Sequence(sequence: [self.output] + elements)
     }
 
     public func contains(where predicate: (Output) -> Bool) -> Just<Bool> {
         return self.map(predicate)
     }
 
-    public func tryContains(where predicate: (Output) throws -> Bool) -> Publishers.Once<Bool, Error> {
+    public func tryContains(where predicate: (Output) throws -> Bool) -> Result<Bool, Error>.ResultPublisher {
         return self.tryMap(predicate)
     }
 
@@ -192,16 +192,12 @@ extension Just {
         return Just<T>(transform(self.output))
     }
 
-    public func tryMap<T>(_ transform: (Output) throws -> T) -> Publishers.Once<T, Error> {
-        do {
-            return Publishers.Once(try transform(self.output))
-        } catch {
-            return Publishers.Once(Result.failure(error))
-        }
+    public func tryMap<T>(_ transform: (Output) throws -> T) -> Result<T, Error>.ResultPublisher {
+        return Result { try transform(self.output) }.resultPublisher
     }
 
-    public func mapError<E>(_: (Failure) -> E) -> Publishers.Once<Output, E> where E: Error {
-        return Publishers.Once(self.output)
+    public func mapError<E>(_: (Failure) -> E) -> Result<Output, E>.ResultPublisher where E: Error {
+        return Result.success(self.output).resultPublisher
     }
 
     // swiftformat:disable:next typeSugar
@@ -230,11 +226,11 @@ extension Just {
         return self.tryFilter(predicate)
     }
 
-    public func reduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Publishers.Once<T, Failure> {
-        return Publishers.Once(nextPartialResult(initialResult, self.output))
+    public func reduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Result<T, Failure>.ResultPublisher {
+        return Result.success(nextPartialResult(initialResult, self.output)).resultPublisher
     }
 
-    public func tryReduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Publishers.Once<T, Error> {
+    public func tryReduce<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Result<T, Error>.ResultPublisher {
         return self.tryMap { try nextPartialResult(initialResult, $0) }
     }
 
@@ -242,8 +238,8 @@ extension Just {
         return self
     }
 
-    public func tryRemoveDuplicates(by _: (Output, Output) throws -> Bool) -> Publishers.Once<Output, Error> {
-        return Publishers.Once(self.output)
+    public func tryRemoveDuplicates(by _: (Output, Output) throws -> Bool) -> Result<Output, Error>.ResultPublisher {
+        return Result.success(self.output).resultPublisher
     }
 
     public func replaceError(with _: Output) -> Just<Output> {
@@ -262,15 +258,15 @@ extension Just {
         return self
     }
 
-    public func scan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Publishers.Once<T, Failure> {
+    public func scan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) -> T) -> Result<T, Failure>.ResultPublisher {
         return self.reduce(initialResult, nextPartialResult)
     }
 
-    public func tryScan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Publishers.Once<T, Error> {
+    public func tryScan<T>(_ initialResult: T, _ nextPartialResult: (T, Output) throws -> T) -> Result<T, Error>.ResultPublisher {
         return self.tryReduce(initialResult, nextPartialResult)
     }
 
-    public func setFailureType<E: Error>(to _: E.Type) -> Publishers.Once<Output, E> {
-        return Publishers.Once(self.output)
+    public func setFailureType<E: Error>(to _: E.Type) -> Result<Output, E>.ResultPublisher {
+        return Result.success(self.output).resultPublisher
     }
 }

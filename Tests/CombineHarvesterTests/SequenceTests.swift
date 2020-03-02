@@ -12,6 +12,7 @@ class SequenceTests: XCTestCase {
     typealias PublishersSequence = Publishers.Sequence<[String], Never>
     // swiftformat:disable:next typeSugar
     typealias PublishersOptional = Publishers.Optional
+    typealias ResultResultPublisher<O, E: Error> = Result<O, E>.ResultPublisher
 
     func testSubscribe() {
         var subject = TestSubject<String, Never>()
@@ -42,52 +43,52 @@ class SequenceTests: XCTestCase {
     }
 
     func testAllSatisfy() {
-        XCTAssertEqual(PublishersSequence(sequence: []).allSatisfy { $0 == "Hello" }, Publishers.Once(true))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).allSatisfy { $0 == "Hello" }, Publishers.Once(true))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "Hello"]).allSatisfy { $0 == "Hello" }, Publishers.Once(true))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).allSatisfy { $0 == "Hello" }, Publishers.Once(false))
+        XCTAssertEqual(PublishersSequence(sequence: []).allSatisfy { $0 == "Hello" }, ResultResultPublisher(true))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).allSatisfy { $0 == "Hello" }, ResultResultPublisher(true))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "Hello"]).allSatisfy { $0 == "Hello" }, ResultResultPublisher(true))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).allSatisfy { $0 == "Hello" }, ResultResultPublisher(false))
 
         XCTAssertEqual(
             PublishersSequence(sequence: [])
                 .tryAllSatisfy { $0 == "Hello" }
                 .mapError { $0 as! TestError },
-            Publishers.Once(true)
+            ResultResultPublisher(true)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello"])
                 .tryAllSatisfy { $0 == "Hello" }
                 .mapError { $0 as! TestError },
-            Publishers.Once(true)
+            ResultResultPublisher(true)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello", "Hello"])
                 .tryAllSatisfy { $0 == "Hello" }
                 .mapError { $0 as! TestError },
-            Publishers.Once(true)
+            ResultResultPublisher(true)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello", "World"])
                 .tryAllSatisfy { $0 == "Hello" }
                 .mapError { $0 as! TestError },
-            Publishers.Once(false)
+            ResultResultPublisher(false)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: [])
                 .tryAllSatisfy { _ in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(true)
+            ResultResultPublisher(true)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello", "World"])
                 .tryAllSatisfy { _ in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(.failure(TestError.error))
+            ResultResultPublisher(.failure(TestError.error))
         )
     }
 
     func testCollect() {
-        XCTAssertEqual(PublishersSequence(sequence: []).collect(), Publishers.Once([]))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).collect(), Publishers.Once(["Hello"]))
+        XCTAssertEqual(PublishersSequence(sequence: []).collect(), ResultResultPublisher([]))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).collect(), ResultResultPublisher(["Hello"]))
     }
 
     func testCompactMap() {
@@ -190,57 +191,57 @@ class SequenceTests: XCTestCase {
     }
 
     func testContains() {
-        XCTAssertEqual(PublishersSequence(sequence: []).contains("Hello"), Publishers.Once(false))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).contains("Hello"), Publishers.Once(true))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).contains("Hi"), Publishers.Once(false))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "Hi"]).contains("Hi"), Publishers.Once(true))
+        XCTAssertEqual(PublishersSequence(sequence: []).contains("Hello"), ResultResultPublisher(false))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).contains("Hello"), ResultResultPublisher(true))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).contains("Hi"), ResultResultPublisher(false))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "Hi"]).contains("Hi"), ResultResultPublisher(true))
 
-        XCTAssertEqual(PublishersSequence(sequence: []).contains(where: { $0 == "Hello" }), Publishers.Once(false))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).contains(where: { $0 == "Hello" }), Publishers.Once(true))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).contains(where: { $0 == "Hi" }), Publishers.Once(false))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "Hi"]).contains(where: { $0 == "Hi" }), Publishers.Once(true))
+        XCTAssertEqual(PublishersSequence(sequence: []).contains(where: { $0 == "Hello" }), ResultResultPublisher(false))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).contains(where: { $0 == "Hello" }), ResultResultPublisher(true))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).contains(where: { $0 == "Hi" }), ResultResultPublisher(false))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "Hi"]).contains(where: { $0 == "Hi" }), ResultResultPublisher(true))
 
         XCTAssertEqual(
             PublishersSequence(sequence: [])
                 .tryContains(where: { $0 == "Hello" })
                 .mapError { $0 as! TestError },
-            Publishers.Once(false)
+            ResultResultPublisher(false)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello"])
                 .tryContains(where: { $0 == "Hello" })
                 .mapError { $0 as! TestError },
-            Publishers.Once(true)
+            ResultResultPublisher(true)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello"])
                 .tryContains(where: { $0 == "Hi" })
                 .mapError { $0 as! TestError },
-            Publishers.Once(false)
+            ResultResultPublisher(false)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello", "Hi"])
                 .tryContains(where: { $0 == "Hi" })
                 .mapError { $0 as! TestError },
-            Publishers.Once(true)
+            ResultResultPublisher(true)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: [])
                 .tryContains(where: { _ in throw TestError.error })
                 .mapError { $0 as! TestError },
-            Publishers.Once(false)
+            ResultResultPublisher(false)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello"])
                 .tryContains(where: { _ in throw TestError.error })
                 .mapError { $0 as! TestError },
-            Publishers.Once(.failure(TestError.error))
+            ResultResultPublisher(.failure(TestError.error))
         )
     }
 
     func testCount() {
-        XCTAssertEqual(Publishers.Sequence<String, Never>(sequence: "").count(), Publishers.Once<Int, Never>(0))
-        XCTAssertEqual(Publishers.Sequence<String, Never>(sequence: "H").count(), Publishers.Once<Int, Never>(1))
+        XCTAssertEqual(Publishers.Sequence<String, Never>(sequence: "").count(), ResultResultPublisher<Int, Never>(0))
+        XCTAssertEqual(Publishers.Sequence<String, Never>(sequence: "H").count(), ResultResultPublisher<Int, Never>(1))
 
         XCTAssertEqual(PublishersSequence(sequence: []).count(), Publishers.Optional(0), "RandomAccessCollection")
         XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).count(), Publishers.Optional(1), "RandomAccessCollection")
@@ -476,45 +477,45 @@ class SequenceTests: XCTestCase {
     }
 
     func testReduce() {
-        XCTAssertEqual(PublishersSequence(sequence: []).reduce(0) { $0 + $1.count }, Publishers.Once(0))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).reduce(0) { $0 + $1.count }, Publishers.Once(5))
-        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).reduce(0) { $0 + $1.count }, Publishers.Once(10))
+        XCTAssertEqual(PublishersSequence(sequence: []).reduce(0) { $0 + $1.count }, ResultResultPublisher(0))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello"]).reduce(0) { $0 + $1.count }, ResultResultPublisher(5))
+        XCTAssertEqual(PublishersSequence(sequence: ["Hello", "World"]).reduce(0) { $0 + $1.count }, ResultResultPublisher(10))
 
         XCTAssertEqual(
             PublishersSequence(sequence: [])
                 .tryReduce(0) { $0 + $1.count }
                 .mapError { $0 as! TestError },
-            Publishers.Once(0)
+            ResultResultPublisher(0)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: [])
                 .tryReduce(0) { _, _ in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(0)
+            ResultResultPublisher(0)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello"])
                 .tryReduce(0) { $0 + $1.count }
                 .mapError { $0 as! TestError },
-            Publishers.Once(5)
+            ResultResultPublisher(5)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello"])
                 .tryReduce(0) { _, _ in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(.failure(.error))
+            ResultResultPublisher(.failure(.error))
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello", "World"])
                 .tryReduce(0) { $0 + $1.count }
                 .mapError { $0 as! TestError },
-            Publishers.Once(10)
+            ResultResultPublisher(10)
         )
         XCTAssertEqual(
             PublishersSequence(sequence: ["Hello", "World"])
                 .tryReduce(0) { _, _ in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(.failure(.error))
+            ResultResultPublisher(.failure(.error))
         )
     }
 

@@ -32,20 +32,16 @@ extension Sequence {
 }
 
 extension Publishers.Sequence {
-    public func allSatisfy(_ predicate: (Output) -> Bool) -> Publishers.Once<Bool, Failure> {
-        return Publishers.Once(self.sequence.allSatisfy(predicate))
+    public func allSatisfy(_ predicate: (Output) -> Bool) -> Result<Bool, Failure>.ResultPublisher {
+        return Result.success(self.sequence.allSatisfy(predicate)).resultPublisher
     }
 
-    public func tryAllSatisfy(_ predicate: (Output) throws -> Bool) -> Publishers.Once<Bool, Error> {
-        do {
-            return Publishers.Once(try self.sequence.allSatisfy(predicate))
-        } catch {
-            return Publishers.Once(error)
-        }
+    public func tryAllSatisfy(_ predicate: (Output) throws -> Bool) -> Result<Bool, Error>.ResultPublisher {
+        return Result { try self.sequence.allSatisfy(predicate) }.resultPublisher
     }
 
-    public func collect() -> Publishers.Once<[Output], Failure> {
-        return Publishers.Once(Array(self.sequence))
+    public func collect() -> Result<[Output], Failure>.ResultPublisher {
+        return Result.success(Array(self.sequence)).resultPublisher
     }
 
     public func compactMap<T>(_ transform: (Output) -> T?) -> Publishers.Sequence<[T], Failure> {
@@ -87,16 +83,12 @@ extension Publishers.Sequence {
         }
     }
 
-    public func contains(where predicate: (Output) -> Bool) -> Publishers.Once<Bool, Failure> {
-        return Publishers.Once(self.sequence.contains(where: predicate))
+    public func contains(where predicate: (Output) -> Bool) -> Result<Bool, Failure>.ResultPublisher {
+        return Result.success(self.sequence.contains(where: predicate)).resultPublisher
     }
 
-    public func tryContains(where predicate: (Output) throws -> Bool) -> Publishers.Once<Bool, Error> {
-        do {
-            return Publishers.Once(try self.sequence.contains(where: predicate))
-        } catch {
-            return Publishers.Once(error)
-        }
+    public func tryContains(where predicate: (Output) throws -> Bool) -> Result<Bool, Error>.ResultPublisher {
+        return Result { try self.sequence.contains(where: predicate) }.resultPublisher
     }
 
     public func drop(while predicate: (Elements.Element) -> Bool) -> Publishers.Sequence<DropWhileSequence<Elements>, Failure> {
@@ -144,16 +136,12 @@ extension Publishers.Sequence {
         return Publishers.Sequence(sequence: self.sequence.prefix(while: predicate))
     }
 
-    public func reduce<T>(_ initialResult: T, _ nextPartialResult: @escaping (T, Output) -> T) -> Publishers.Once<T, Failure> {
-        return Publishers.Once(self.sequence.reduce(initialResult, nextPartialResult))
+    public func reduce<T>(_ initialResult: T, _ nextPartialResult: @escaping (T, Output) -> T) -> Result<T, Failure>.ResultPublisher {
+        return Result.success(self.sequence.reduce(initialResult, nextPartialResult)).resultPublisher
     }
 
-    public func tryReduce<T>(_ initialResult: T, _ nextPartialResult: @escaping (T, Output) throws -> T) -> Publishers.Once<T, Error> {
-        do {
-            return Publishers.Once(try self.sequence.reduce(initialResult, nextPartialResult))
-        } catch {
-            return Publishers.Once(error)
-        }
+    public func tryReduce<T>(_ initialResult: T, _ nextPartialResult: @escaping (T, Output) throws -> T) -> Result<T, Error>.ResultPublisher {
+        return Result { try self.sequence.reduce(initialResult, nextPartialResult) }.resultPublisher
     }
 
     public func replaceNil<T>(with output: T) -> Publishers.Sequence<[T], Failure> where Elements.Element == T? {
@@ -183,8 +171,8 @@ extension Publishers.Sequence where Elements.Element: Equatable {
         }
     }
 
-    public func contains(_ output: Elements.Element) -> Publishers.Once<Bool, Failure> {
-        return Publishers.Once(self.sequence.contains(output))
+    public func contains(_ output: Elements.Element) -> Result<Bool, Failure>.ResultPublisher {
+        return Result.success(self.sequence.contains(output)).resultPublisher
     }
 }
 
@@ -211,8 +199,8 @@ extension Publishers.Sequence where Elements: Collection {
 }
 
 extension Publishers.Sequence where Elements: Collection {
-    public func count() -> Publishers.Once<Int, Failure> {
-        return Publishers.Once(self.sequence.count)
+    public func count() -> Result<Int, Failure>.ResultPublisher {
+        return Result.success(self.sequence.count).resultPublisher
     }
 }
 

@@ -9,6 +9,8 @@ import XCTest
 @testable import CombineHarvester
 
 class JustTests: XCTestCase {
+    typealias ResultPublisher<Output, Failure: Error> = Result<Output, Failure>.ResultPublisher
+
     func testSubscribe() {
         let subject = TestSubject<String, Never>()
         let publisher = Just("Hello")
@@ -30,19 +32,19 @@ class JustTests: XCTestCase {
             Just("Hello")
                 .tryAllSatisfy { $0 == "Hello" }
                 .mapError { $0 as! TestError },
-            Publishers.Once(true)
+            ResultPublisher(true)
         )
         XCTAssertEqual(
             Just("Hello")
                 .tryAllSatisfy { $0 != "Hello" }
                 .mapError { $0 as! TestError },
-            Publishers.Once(false)
+            ResultPublisher(false)
         )
         XCTAssertEqual(
             Just("Hello")
                 .tryAllSatisfy { _ in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(TestError.error)
+            ResultPublisher(TestError.error)
         )
     }
 
@@ -97,19 +99,19 @@ class JustTests: XCTestCase {
             Just("Hello")
                 .tryContains(where: { $0 == "Hello" })
                 .mapError { $0 as! TestError },
-            Publishers.Once(true)
+            ResultPublisher(true)
         )
         XCTAssertEqual(
             Just("Hello")
                 .tryContains(where: { $0 == "Hi" })
                 .mapError { $0 as! TestError },
-            Publishers.Once(false)
+            ResultPublisher(false)
         )
         XCTAssertEqual(
             Just("Hello")
                 .tryContains(where: { _ in throw TestError.error })
                 .mapError { $0 as! TestError },
-            Publishers.Once(TestError.error)
+            ResultPublisher(TestError.error)
         )
     }
 
@@ -231,18 +233,18 @@ class JustTests: XCTestCase {
             Just("Hello")
                 .tryMap { "!\($0)!" }
                 .mapError { $0 as! TestError },
-            Publishers.Once("!Hello!")
+            ResultPublisher("!Hello!")
         )
         XCTAssertEqual(
             Just("Hello")
                 .tryMap { (_) -> String in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(TestError.error)
+            ResultPublisher(TestError.error)
         )
     }
 
     func testMapError() {
-        XCTAssertEqual(Just("Hello").mapError { _ in TestError.error }, Publishers.Once("Hello"))
+        XCTAssertEqual(Just("Hello").mapError { _ in TestError.error }, ResultPublisher("Hello"))
     }
 
     func testOutput() {
@@ -295,19 +297,19 @@ class JustTests: XCTestCase {
     }
 
     func testReduce() {
-        XCTAssertEqual(Just("Hello").reduce(0) { $0 + $1.count }, Publishers.Once("Hello".count))
+        XCTAssertEqual(Just("Hello").reduce(0) { $0 + $1.count }, ResultPublisher("Hello".count))
 
         XCTAssertEqual(
             Just("Hello")
                 .tryReduce(0) { $0 + $1.count }
                 .mapError { $0 as! TestError },
-            Publishers.Once("Hello".count)
+            ResultPublisher("Hello".count)
         )
         XCTAssertEqual(
             Just("Hello")
                 .tryReduce(0) { _, _ in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(TestError.error)
+            ResultPublisher(TestError.error)
         )
     }
 
@@ -319,13 +321,13 @@ class JustTests: XCTestCase {
             Just("Hello")
                 .tryRemoveDuplicates(by: { _, _ in false })
                 .mapError { $0 as! TestError },
-            Publishers.Once("Hello")
+            ResultPublisher("Hello")
         )
         XCTAssertEqual(
             Just("Hello")
                 .tryRemoveDuplicates(by: { _, _ in throw TestError.error })
                 .mapError { $0 as! TestError },
-            Publishers.Once("Hello")
+            ResultPublisher("Hello")
         )
     }
 
@@ -343,19 +345,19 @@ class JustTests: XCTestCase {
     }
 
     func testScan() {
-        XCTAssertEqual(Just("Hello").scan(0) { $0 + $1.count }, Publishers.Once("Hello".count))
+        XCTAssertEqual(Just("Hello").scan(0) { $0 + $1.count }, ResultPublisher("Hello".count))
 
         XCTAssertEqual(
             Just("Hello")
                 .tryScan(0) { $0 + $1.count }
                 .mapError { $0 as! TestError },
-            Publishers.Once("Hello".count)
+            ResultPublisher("Hello".count)
         )
         XCTAssertEqual(
             Just("Hello")
                 .tryScan(0) { _, _ in throw TestError.error }
                 .mapError { $0 as! TestError },
-            Publishers.Once(.error)
+            ResultPublisher(.error)
         )
     }
 }
