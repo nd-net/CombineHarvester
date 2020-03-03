@@ -27,12 +27,12 @@ extension Subscribers {
 
         public var description: String {
             guard let max = self.max else {
-                return "Subscribers.Demand.unlimited"
+                return "unlimited"
             }
             if max == 0 {
-                return "Subscribers.Demand.none"
+                return "none"
             } else {
-                return "Subscribers.Demand.max(\(max))"
+                return "max(\(max))"
             }
         }
 

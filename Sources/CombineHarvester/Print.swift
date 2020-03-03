@@ -31,36 +31,46 @@ extension Publishers {
             self.stream = stream
         }
 
-        private func print(_ items: Any...) {
-            guard var stream = self.stream else {
-                return
-            }
+        private func print(items: Any...) {
+            var stream = self.stream ?? ""
 
-            var string = self.prefix
-            if !string.isEmpty {
-                string += " "
+            if !self.prefix.isEmpty {
+                stream.write(self.prefix)
+                stream.write(": ")
             }
-            string += items.map(String.init(describing:))
-                .joined(separator: " ")
-            string += "\n"
+            for item in items {
+                stream.write(String(describing: item))
+            }
+            stream.write("\n")
 
-            stream.write(string)
+            if self.stream == nil {
+                Swift.print(stream)
+            }
         }
 
         private func print(subscription: Subscription) {
-            self.print("receive(subscription:", subscription, ")")
+            self.print(items: "receive subscription: ", subscription)
         }
 
         private func print(value: Output) {
-            self.print("receive(", value, ")")
+            self.print(items: "receive value: (", value, ")")
         }
 
         private func print(completion: Subscribers.Completion<Failure>) {
-            self.print("receive(completion:", completion, ")")
+            switch completion {
+            case .finished:
+                self.print(items: "receive finished")
+            case let .failure(error):
+                self.print(items: "receive error: (", error, ")")
+            }
         }
 
         private func printCancellation() {
-            self.print("cancel()")
+            self.print(items: "receive cancel")
+        }
+
+        private func printRequest(demand: Subscribers.Demand) {
+            self.print(items: "request ", demand)
         }
 
         public func receive<S: Subscriber>(subscriber: S) where Upstream.Failure == S.Failure, Upstream.Output == S.Input {
@@ -73,7 +83,7 @@ extension Publishers {
                               receiveOutput: self.print(value:),
                               receiveCompletion: self.print(completion:),
                               receiveCancel: self.printCancellation,
-                              receiveRequest: nil)
+                              receiveRequest: self.printRequest)
                 .subscribe(subscriber)
         }
     }
