@@ -1,7 +1,7 @@
 import Foundation
 
 extension Publishers {
-    public struct Decode<Upstream, Output, Coder>: Publisher where Upstream: Publisher, Output: Decodable, Coder: TopLevelDecoder, Upstream.Output == Coder.Input {
+    public struct Decode<Upstream: Publisher, Output: Decodable, Coder: TopLevelDecoder>: Publisher where Upstream.Output == Coder.Input {
         public typealias Failure = Error
 
         public let upstream: Upstream
@@ -20,7 +20,7 @@ extension Publishers {
         }
     }
 
-    public struct Encode<Upstream, Coder>: Publisher where Upstream: Publisher, Coder: TopLevelEncoder, Upstream.Output: Encodable {
+    public struct Encode<Upstream: Publisher, Coder: TopLevelEncoder>: Publisher where Upstream.Output: Encodable {
         public typealias Failure = Error
         public typealias Output = Coder.Output
 
@@ -50,7 +50,7 @@ extension Publishers.Decode: Equatable where Upstream: Equatable, Coder: Equatab
 extension Publisher {
     /// Decodes the output from upstream using a specified `TopLevelDecoder`.
     /// For example, use `JSONDecoder`.
-    public func decode<Item, Coder>(type _: Item.Type, decoder: Coder) -> Publishers.Decode<Self, Item, Coder> where Item: Decodable, Coder: TopLevelDecoder, Self.Output == Coder.Input {
+    public func decode<Item: Decodable, Coder: TopLevelDecoder>(type _: Item.Type, decoder: Coder) -> Publishers.Decode<Self, Item, Coder> where Self.Output == Coder.Input {
         return Publishers.Decode(upstream: self, decoder: decoder)
     }
 }
