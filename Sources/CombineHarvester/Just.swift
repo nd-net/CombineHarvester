@@ -3,7 +3,6 @@
 /// You can use a `Just` publisher to start a chain of publishers. A `Just` publisher is also useful when replacing a value with `Catch`.
 ///
 /// In contrast with `Publishers.Once`, a `Just` publisher cannot fail with an error.
-/// In contrast with `Publishers.Optional`, a `Just` publisher always produces a value.
 public struct Just<Output>: Publisher {
     public typealias Failure = Never
 
@@ -159,7 +158,7 @@ extension Just {
         return Result { try transform(self.output) }.resultPublisher
     }
 
-    public func mapError<E>(_: (Failure) -> E) -> Result<Output, E>.ResultPublisher where E: Error {
+    public func mapError<E: Error>(_: (Failure) -> E) -> Result<Output, E>.ResultPublisher {
         return Result.success(self.output).resultPublisher
     }
 
@@ -209,10 +208,6 @@ extension Just {
     }
 
     public func retry(_: Int) -> Just<Output> {
-        return self
-    }
-
-    public func retry() -> Just<Output> {
         return self
     }
 

@@ -227,7 +227,6 @@ class JustTests: XCTestCase {
 
     func testRetry() {
         XCTAssertEqual(Just("Hello").retry(42), Just("Hello"))
-        XCTAssertEqual(Just("Hello").retry(), Just("Hello"))
     }
 
     func testScan() {
